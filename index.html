@@ -1,91 +1,27 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>WINZO P2E</title>
-  
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <style>
-    body { background-color: #050608; margin: 0; color: white; font-family: sans-serif; overflow: hidden; }
-    #root { min-height: 100vh; }
-    /* Loading spinner đơn giản nếu React chưa load xong */
-    .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <title>WINZO TEST</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div id="root">
-    <div class="loading-screen">ĐANG TẢI WINZO...</div>
-  </div>
+<body class="bg-black text-white flex items-center justify-center h-screen">
+    <div id="root">Đang khởi tạo React...</div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-    const { Trophy, Star, Swords, LayoutGrid, Award, Home, User, Globe, Grid3X3, Zap } = lucide;
-
-    const App = () => {
-      const [view, setView] = useState('lobby');
-      const [userStars, setUserStars] = useState(2500);
-
-      useEffect(() => {
-        if (window.Telegram?.WebApp) {
-          window.Telegram.WebApp.ready();
-          window.Telegram.WebApp.expand();
+    <script type="text/babel">
+        function App() {
+            return (
+                <div className="p-8 bg-blue-600 rounded-3xl shadow-2xl text-center animate-bounce">
+                    <h1 className="text-2xl font-black">WINZO ĐÃ HOẠT ĐỘNG!</h1>
+                    <p className="mt-2 opacity-80">Nếu bạn thấy thông báo này, hệ thống đã thông suốt.</p>
+                </div>
+            );
         }
-      }, []);
-
-      return (
-        <div className="min-h-screen bg-[#050608] text-white p-4">
-          {/* Header */}
-          <header className="flex justify-between items-center bg-gray-900/50 p-4 rounded-3xl border border-white/5 mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Zap size={20} className="fill-white text-white" />
-              </div>
-              <span className="font-black text-xl tracking-tighter">WINZO</span>
-            </div>
-            <div className="flex items-center gap-2 bg-yellow-500/10 px-4 py-2 rounded-2xl border border-yellow-500/20">
-              <Star size={16} className="text-yellow-500 fill-yellow-500" />
-              <span className="font-bold text-yellow-500">{userStars.toLocaleString()}</span>
-            </div>
-          </header>
-
-          {/* Nội dung Sảnh Game */}
-          {view === 'lobby' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold px-2">Sảnh Game P2E</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {['Cờ Vua', 'Cờ Tướng', 'Cờ Vây', 'Caro'].map((game) => (
-                  <div key={game} className="bg-gray-800/40 p-6 rounded-3xl border border-white/5 flex flex-col items-center gap-3 active:scale-95 transition-transform">
-                    <Trophy className="text-blue-500" size={32} />
-                    <span className="font-bold">{game}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Navigation */}
-          <nav className="fixed bottom-6 left-6 right-6 bg-gray-900/90 backdrop-blur-xl border border-white/10 h-20 rounded-[2.5rem] flex items-center justify-around px-4 shadow-2xl">
-            <button onClick={() => setView('lobby')} className={`p-4 rounded-2xl ${view === 'lobby' ? 'bg-blue-600' : 'text-gray-500'}`}>
-              <Home size={24} />
-            </button>
-            <button onClick={() => setView('profile')} className={`p-4 rounded-2xl ${view === 'profile' ? 'bg-blue-600' : 'text-gray-500'}`}>
-              <User size={24} />
-            </button>
-          </nav>
-        </div>
-      );
-    };
-
-    // Render trực tiếp
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
