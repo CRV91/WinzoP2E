@@ -3,71 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>WINZO P2E</title>
+    <title>WINZO PLATFORM</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #050608; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; overflow: hidden; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .btn-gradient { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
-        .tab-active { color: #3b82f6; transform: scale(1.1); }
-        .bg-glow { position: fixed; inset: 0; background: radial-gradient(circle at 50% -20%, #1e3a8a 0%, transparent 50%); z-index: -1; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap');
         
-        /* Bàn cờ tối ưu */
-        .board-container { display: grid; gap: 1px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.1); margin: 0 auto; border-radius: 8px; overflow: hidden; }
-        .cell { background: #0b0e14; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-        .cell:active { background: #1e293b; }
+        body { background: #02040a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        .font-game { font-family: 'Orbitron', sans-serif; }
+        
+        .glass-card { background: rgba(13, 17, 23, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; }
+        .neon-border { border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 0 15px rgba(59, 130, 246, 0.1); }
+        .btn-premium { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); transition: all 0.3s ease; }
+        .btn-premium:active { transform: scale(0.95); filter: brightness(1.2); }
+        
+        .bg-mesh {
+            position: fixed; inset: 0; z-index: -1;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+        }
 
-        /* Animation */
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .lang-node { padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; }
+        .lang-active { background: #3b82f6; color: white; }
     </style>
 </head>
 <body>
-    <div class="bg-glow"></div>
-    <div id="app-root" class="pb-32"></div>
+    <div class="bg-mesh"></div>
+    <div id="app" class="h-screen flex flex-col relative overflow-hidden"></div>
 
     <script>
         const tg = window.Telegram?.WebApp;
-        if (tg) { tg.ready(); tg.expand(); }
-
-        let state = {
-            view: 'lobby', // lobby, game, friends
-            stars: 2500,
-            referrals: 12,
-            refLink: "https://t.me/WinzoGameBot?start=user123",
-            currentGame: null,
-            games: {
-                caro: { name: 'Cờ Caro', cols: 15, size: 225, color: '#3b82f6', icon: '🏆' },
-                chess: { name: 'Cờ Vua', cols: 8, size: 64, color: '#818cf8', icon: '⚔️' },
-                xiangqi: { name: 'Cờ Tướng', cols: 9, size: 90, color: '#ef4444', icon: '🏯' },
-                go: { name: 'Cờ Vây', cols: 13, size: 169, color: '#10b981', icon: '☯️' }
+        
+        // Cấu hình ngôn ngữ
+        const i18n = {
+            vi: {
+                lobby: "Sảnh Game", friends: "Bạn bè", profile: "Cá nhân",
+                total_stars: "Số dư Stars", invite_friend: "Mời bạn bè",
+                ref_msg: "Nhận 2% hoa hồng vĩnh viễn", copy: "Sao chép link",
+                joined: "Đã tham gia", start_game: "Thách đấu", 
+                commission: "Hoa hồng 2%", status: "Đang chờ đối thủ..."
+            },
+            en: {
+                lobby: "Lobby", friends: "Affiliate", profile: "Profile",
+                total_stars: "Stars Balance", invite_friend: "Invite Friends",
+                ref_msg: "Get 2% lifetime commission", copy: "Copy Link",
+                joined: "Joined", start_game: "Play Now", 
+                commission: "2% Bonus", status: "Waiting for opponent..."
             }
         };
 
+        let state = {
+            lang: 'vi',
+            view: 'lobby',
+            stars: 2500,
+            referrals: [
+                { id: 1, name: "Hoàng Minh", status: "Active", earned: 50 },
+                { id: 2, name: "Alex Jones", status: "Pending", earned: 0 }
+            ],
+            games: [
+                { id: 'caro', name: 'Caro', icon: '🏆', color: 'blue' },
+                { id: 'chess', name: 'Chess', icon: '⚔️', color: 'indigo' },
+                { id: 'xiangqi', name: 'Xiangqi', icon: '🏯', color: 'red' },
+                { id: 'go', name: 'Go', icon: '☯️', color: 'emerald' }
+            ]
+        };
+
         function render() {
-            const root = document.getElementById('app-root');
-            let content = '';
+            const t = i18n[state.lang];
+            const root = document.getElementById('app');
+
+            let mainContent = '';
+
+            // Render Header
+            const header = `
+                <div class="p-4 flex justify-between items-center z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white italic">W</div>
+                        <span class="font-game font-black text-lg tracking-tighter">WINZO</span>
+                    </div>
+                    <div class="flex gap-1 glass-card p-1">
+                        <div onclick="setLang('vi')" class="lang-node ${state.lang==='vi'?'lang-active':''}">VN</div>
+                        <div onclick="setLang('en')" class="lang-node ${state.lang==='en'?'lang-active':''}">EN</div>
+                    </div>
+                </div>
+            `;
 
             if (state.view === 'lobby') {
-                content = `
-                    <div class="p-6 fade-in">
-                        <div class="glass p-5 rounded-[2rem] flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-bold">W</div>
-                                <span class="font-black text-xl italic tracking-tighter">WINZO</span>
+                mainContent = `
+                    <div class="px-5 overflow-y-auto flex-1">
+                        <div class="glass-card neon-border p-5 mb-6 flex justify-between items-center">
+                            <div>
+                                <p class="text-[10px] uppercase font-bold text-blue-400 tracking-widest">${t.total_stars}</p>
+                                <p class="text-2xl font-black font-game">${state.stars.toLocaleString()} <span class="text-xs text-yellow-500 italic">⭐</span></p>
                             </div>
-                            <div class="bg-white/5 px-4 py-2 rounded-2xl border border-white/10 font-bold text-yellow-500">
-                                ${state.stars.toLocaleString()} ⭐
+                            <div class="w-12 h-12 rounded-full border-2 border-blue-500/20 flex items-center justify-center bg-blue-500/10">
+                                <svg width="20" height="20" fill="currentColor" class="text-blue-500"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            ${Object.keys(state.games).map(key => `
-                                <div onclick="changeView('game', '${key}')" class="glass p-5 rounded-[2.5rem] flex flex-col items-center gap-3 active:scale-95 transition-all">
-                                    <div class="text-3xl mb-1">${state.games[key].icon}</div>
-                                    <span class="font-bold text-sm text-center">${state.games[key].name}</span>
-                                    <div class="w-full bg-white/5 py-2 rounded-xl text-[9px] font-bold text-center uppercase opacity-60">Thách đấu</div>
+                            ${state.games.map(g => `
+                                <div onclick="setView('game')" class="glass-card p-5 flex flex-col items-center gap-3 active:scale-95 transition-all relative overflow-hidden group">
+                                    <div class="absolute -right-2 -top-2 opacity-10 group-hover:scale-150 transition-all text-4xl">${g.icon}</div>
+                                    <div class="text-3xl">${g.icon}</div>
+                                    <span class="font-extrabold text-sm uppercase tracking-tight">${g.name}</span>
+                                    <button class="w-full btn-premium py-2 rounded-xl text-[10px] font-black uppercase">${t.start_game}</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -75,81 +116,71 @@
                 `;
             } 
             else if (state.view === 'friends') {
-                content = `
-                    <div class="p-6 fade-in">
-                        <h2 class="text-2xl font-black mb-2 italic">MỜI BẠN BÈ</h2>
-                        <p class="text-white/50 text-xs mb-6 font-medium">Nhận ngay 500 ⭐ cho mỗi người bạn tham gia</p>
-                        
-                        <div class="glass p-6 rounded-[2.5rem] mb-6 text-center">
-                            <div class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Link giới thiệu</div>
-                            <div class="text-xs truncate bg-black/40 p-3 rounded-xl border border-white/5 mb-4">${state.refLink}</div>
-                            <button onclick="copyRef()" class="w-full btn-gradient py-4 rounded-2xl font-black text-sm uppercase">Copy Link & Mời</button>
+                mainContent = `
+                    <div class="px-5 overflow-y-auto flex-1">
+                        <div class="glass-card p-6 mb-6 relative overflow-hidden">
+                            <div class="relative z-10 text-center">
+                                <h3 class="font-game font-black text-xl mb-1">${t.invite_friend}</h3>
+                                <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-4">${t.ref_msg}</p>
+                                <div class="bg-black/50 p-3 rounded-xl border border-white/5 text-[10px] mb-4 truncate italic opacity-60">t.me/winzo_bot?start=ref_${tg?.initDataUnsafe?.user?.id || '123'}</div>
+                                <button onclick="copyRef()" class="w-full btn-premium py-3 rounded-xl font-black text-xs uppercase tracking-widest">${t.copy}</button>
+                            </div>
                         </div>
 
                         <div class="space-y-3">
-                            <h3 class="text-xs font-bold text-white/40 uppercase px-2">Danh sách bạn bè (${state.referrals})</h3>
-                            <div class="glass p-4 rounded-3xl flex justify-between items-center opacity-60">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-white/10 rounded-full"></div>
-                                    <span class="text-sm font-bold">Người chơi ẩn danh</span>
+                            <p class="text-[10px] font-bold text-white/30 uppercase px-2">${t.joined} (${state.referrals.length})</p>
+                            ${state.referrals.map(r => `
+                                <div class="glass-card p-4 flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold">
+                                            ${r.name[0]}
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold">${r.name}</p>
+                                            <p class="text-[8px] text-white/40 uppercase">${r.status}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs font-black text-green-500">+${r.earned} ⭐</p>
+                                        <p class="text-[8px] opacity-40 uppercase tracking-tighter">${t.commission}</p>
+                                    </div>
                                 </div>
-                                <span class="text-xs text-green-500 font-bold">+500</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            else if (state.view === 'game') {
-                const g = state.games[state.currentGame];
-                content = `
-                    <div class="p-4 fade-in">
-                        <div class="flex justify-between items-center mb-6">
-                            <button onclick="changeView('lobby')" class="w-10 h-10 glass rounded-full flex items-center justify-center text-xs font-bold">←</button>
-                            <h2 style="color: ${g.color}" class="font-black italic uppercase">${g.name}</h2>
-                            <div class="w-10"></div>
-                        </div>
-                        <div class="board-container" style="grid-template-columns: repeat(${g.cols}, 1fr);">
-                            ${Array(g.size).fill(0).map(() => `<div class="cell" onclick="haptic()"></div>`).join('')}
-                        </div>
-                        <div class="mt-8 glass p-6 rounded-[2.5rem] text-center">
-                            <div class="animate-pulse text-blue-400 font-bold text-sm italic">Đang chờ đối thủ...</div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
             }
 
             // Navigation Bar
-            content += `
-                <div class="fixed bottom-8 left-8 right-8 glass h-20 rounded-[2.5rem] flex items-center justify-around px-6 shadow-2xl z-50">
-                    <button onclick="changeView('lobby')" class="${state.view === 'lobby' ? 'tab-active text-blue-500' : 'text-white/30'}">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-                    </button>
-                    <div onclick="changeView('lobby')" class="w-12 h-12 btn-gradient rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
-                        <svg width="20" height="20" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            const nav = `
+                <div class="p-6">
+                    <div class="glass-card h-16 flex items-center justify-around px-4 neon-border shadow-blue-900/20 shadow-2xl">
+                        <button onclick="setView('lobby')" class="p-3 transition-all ${state.view==='lobby'?'text-blue-500 scale-125':''}">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        </button>
+                        <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/50 rotate-45 transform hover:rotate-90 transition-all duration-500">
+                            <div class="-rotate-45 font-game font-black text-white">W</div>
+                        </div>
+                        <button onclick="setView('friends')" class="p-3 transition-all ${state.view==='friends'?'text-blue-500 scale-125':''}">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87"></path></svg>
+                        </button>
                     </div>
-                    <button onclick="changeView('friends')" class="${state.view === 'friends' ? 'tab-active text-blue-500' : 'text-white/30'}">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    </button>
                 </div>
             `;
 
-            root.innerHTML = content;
+            root.innerHTML = header + mainContent + nav;
         }
 
-        window.changeView = (v, game = null) => {
-            state.view = v;
-            state.currentGame = game;
+        window.setLang = (l) => { state.lang = l; render(); };
+        window.setView = (v) => { 
+            state.view = v; 
             tg?.HapticFeedback?.impactOccurred('medium');
-            render();
+            render(); 
         };
-
         window.copyRef = () => {
-            navigator.clipboard.writeText(state.refLink);
-            tg?.showPopup({ message: "Đã copy link mời bạn bè!" });
+            tg?.showPopup({ message: state.lang === 'vi' ? "Đã copy link mời!" : "Invite link copied!" });
             tg?.HapticFeedback?.notificationOccurred('success');
         };
-
-        window.haptic = () => tg?.HapticFeedback?.impactOccurred('light');
 
         render();
     </script>
