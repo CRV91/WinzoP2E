@@ -9,30 +9,31 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
     body { background-color: #050608; margin: 0; color: white; font-family: sans-serif; overflow-x: hidden; }
     #root { min-height: 100vh; }
     .glass { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); }
+    .nav-active { color: #3b82f6; }
   </style>
 </head>
 <body>
-  <div id="root">
-    <div style="display:flex; justify-content:center; align-items:center; height:100vh; color:gray;">
-      Đang khởi tạo WINZO...
-    </div>
-  </div>
+  <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    const App = () => {
-      // Kiểm tra Lucide đã sẵn sàng chưa
-      const icons = window.lucide || {};
-      const { Trophy, Star, Swords, LayoutGrid, Award, Home, User, Globe, Zap } = icons;
+    // Các icon SVG tĩnh để tránh lỗi React #130
+    const Icons = {
+      Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>,
+      Star: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
+      Trophy: () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>,
+      Home: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>,
+      User: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    };
 
+    const App = () => {
       const [view, setView] = useState('lobby');
       const [userStars, setUserStars] = useState(2500);
 
@@ -40,55 +41,60 @@
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.ready();
           window.Telegram.WebApp.expand();
+          window.Telegram.WebApp.headerColor = '#050608';
         }
       }, []);
 
-      // Nếu không có icon thì dùng chữ tạm để tránh lỗi crash
-      const Icon = ({name, ...props}) => {
-        const LucideIcon = icons[name];
-        return LucideIcon ? <LucideIcon {...props} /> : <span style={{fontSize:'10px'}}>ICO</span>;
-      };
-
       return (
-        <div className="min-h-screen pb-24 p-4 animate-in fade-in duration-700">
+        <div className="min-h-screen pb-28 p-4">
           {/* Header */}
           <div className="flex justify-between items-center glass p-4 rounded-3xl border border-white/10 mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                <Icon name="Zap" size={20} className="fill-white text-white" />
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 text-white">
+                <Icons.Zap />
               </div>
               <span className="font-black text-xl tracking-tighter italic">WINZO</span>
             </div>
             <div className="flex items-center gap-2 bg-yellow-500/10 px-4 py-2 rounded-2xl border border-yellow-500/20">
-              <Icon name="Star" size={16} className="text-yellow-500 fill-yellow-500" />
+              <span className="text-yellow-500"><Icons.Star /></span>
               <span className="font-bold text-yellow-500">{userStars.toLocaleString()}</span>
             </div>
           </div>
 
           {view === 'lobby' ? (
-            <div className="space-y-4">
-              <h2 className="text-sm font-black uppercase tracking-widest text-gray-500 px-2">Sảnh Game Hot</h2>
+            <div className="space-y-4 animate-in fade-in duration-500">
+              <h2 className="text-xs font-black uppercase tracking-widest text-gray-500 px-2">Sảnh Game Mini</h2>
               <div className="grid grid-cols-2 gap-3">
                 {['Cờ Vua', 'Cờ Tướng', 'Cờ Vây', 'Caro'].map((name) => (
-                  <div key={name} className="bg-gray-900/50 p-6 rounded-[2rem] border border-white/5 flex flex-col items-center gap-3 active:scale-95 transition-transform">
-                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
-                      <Icon name="Trophy" size={28} />
+                  <div key={name} className="bg-gray-900/60 p-6 rounded-[2.5rem] border border-white/5 flex flex-col items-center gap-3 active:scale-95 transition-all">
+                    <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
+                      <Icons.Trophy />
                     </div>
                     <span className="font-bold text-sm">{name}</span>
-                    <button className="w-full bg-blue-600 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-blue-600/20">Chơi Ngay</button>
+                    <button className="w-full bg-blue-600 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-blue-600/20">Thách đấu</button>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center py-10 space-y-4">
-              <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center border-4 border-gray-900 shadow-2xl">
-                <Icon name="User" size={40} />
+            <div className="flex flex-col items-center py-10 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.2rem] flex items-center justify-center border-4 border-gray-900 shadow-2xl">
+                <Icons.User />
               </div>
-              <h2 className="text-xl font-black">Người chơi Winzo</h2>
-              <div className="bg-gray-900/80 p-6 rounded-3xl border border-white/5 w-full text-center">
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Thứ hạng</p>
-                <p className="text-2xl font-black text-blue-500">#9,999</p>
+              <div className="text-center">
+                <h2 className="text-2xl font-black">Người chơi Winzo</h2>
+                <p className="text-blue-500 text-[10px] font-bold uppercase tracking-widest mt-1">Hạng: Rookie</p>
+              </div>
+              <div className="bg-gray-900/80 p-6 rounded-[2rem] border border-white/5 w-full flex justify-around">
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase">Thắng</p>
+                  <p className="text-xl font-black">0</p>
+                </div>
+                <div className="w-[1px] bg-white/5"></div>
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase">Thua</p>
+                  <p className="text-xl font-black">0</p>
+                </div>
               </div>
             </div>
           )}
@@ -96,23 +102,18 @@
           {/* Navigation */}
           <nav className="fixed bottom-6 left-6 right-6 glass border border-white/10 h-20 rounded-[2.5rem] flex items-center justify-around px-4 shadow-2xl">
             <button onClick={() => setView('lobby')} className={`p-4 rounded-2xl transition-all ${view === 'lobby' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>
-              <Icon name="Home" size={24} />
+              <Icons.Home />
             </button>
             <button onClick={() => setView('profile')} className={`p-4 rounded-2xl transition-all ${view === 'profile' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>
-              <Icon name="User" size={24} />
+              <Icons.User />
             </button>
           </nav>
         </div>
       );
     };
 
-    // Render an toàn
-    try {
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<App />);
-    } catch (err) {
-      document.getElementById('root').innerHTML = `<div style="color:red; padding:20px;">Lỗi khởi động: ${err.message}</div>`;
-    }
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
   </script>
 </body>
 </html>
