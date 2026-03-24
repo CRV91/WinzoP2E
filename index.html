@@ -1,13 +1,45 @@
-<script type="text/babel">
-    const { useState, useEffect, useCallback } = React;
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>WINZO P2E</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+    body { background-color: #050608; color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
+    .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .bg-glow { position: fixed; inset: 0; background: radial-gradient(circle at 50% -20%, #1e3a8a 0%, transparent 50%); z-index: -1; }
+    .caro-cell { aspect-ratio: 1; border: 0.1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div id="root">
+    <div style="display:flex; justify-content:center; align-items:center; height:100vh; color:gray;">Khởi động WINZO...</div>
+  </div>
 
-    // ... (Giữ nguyên phần Icons và style cũ của bạn) ...
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Hệ thống Icon SVG an toàn
+    const Icons = {
+      Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>,
+      Star: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
+      Trophy: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17M14 14.66V17M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>,
+      Home: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>,
+      User: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    };
 
     const App = () => {
       const [view, setView] = useState('lobby'); // lobby, profile, caro
-      const [userStars, setUserStars] = useState(2500);
+      const [stars, setStars] = useState(2500);
       
-      // Logic Bàn cờ Caro
+      // Caro Logic
       const [board, setBoard] = useState(Array(15 * 15).fill(null));
       const [isXNext, setIsXNext] = useState(true);
       const [winner, setWinner] = useState(null);
@@ -19,156 +51,117 @@
         }
       }, []);
 
-      // Hàm kiểm tra thắng thua
-      const checkWinner = (squares) => {
+      const checkWinner = (s) => {
         const size = 15;
-        const lines = [
-          [1, 0], [0, 1], [1, 1], [1, -1] // Ngang, dọc, chéo xuôi, chéo ngược
-        ];
-
-        for (let i = 0; i < squares.length; i++) {
-          if (!squares[i]) continue;
-          const r = Math.floor(i / size);
-          const c = i % size;
-
-          for (const [dr, dc] of lines) {
+        const directions = [[1,0],[0,1],[1,1],[1,-1]];
+        for (let i = 0; i < s.length; i++) {
+          if (!s[i]) continue;
+          const r = Math.floor(i / size), c = i % size;
+          for (const [dr, dc] of directions) {
             let count = 1;
             for (let step = 1; step < 5; step++) {
-              const nr = r + dr * step;
-              const nc = c + dc * step;
-              if (nr >= 0 && nr < size && nc >= 0 && nc < size && squares[nr * size + nc] === squares[i]) {
-                count++;
-              } else break;
+              const nr = r + dr * step, nc = c + dc * step;
+              if (nr >= 0 && nr < size && nc >= 0 && nc < size && s[nr * size + nc] === s[i]) count++;
+              else break;
             }
-            if (count >= 5) return squares[i];
+            if (count >= 5) return s[i];
           }
         }
         return null;
       };
 
-      const handleSquareClick = (i) => {
+      const handleCellClick = (i) => {
         if (winner || board[i]) return;
         const newBoard = [...board];
         newBoard[i] = isXNext ? 'X' : 'O';
         setBoard(newBoard);
         setIsXNext(!isXNext);
-        
         const win = checkWinner(newBoard);
         if (win) {
           setWinner(win);
-          if (win === 'X') setUserStars(s => s + 500); // Thắng được cộng điểm
-          window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
-        } else {
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+          if (win === 'X') setStars(prev => prev + 500);
         }
       };
 
-      const resetGame = () => {
-        setBoard(Array(15 * 15).fill(null));
-        setWinner(null);
-        setIsXNext(true);
-      };
-
-      // Màn hình chơi Caro
-      const CaroGame = () => (
-        <div className="px-4 py-2 fade-up">
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={() => setView('lobby')} className="text-white/50 text-sm flex items-center gap-1">
-              ← Thoát
-            </button>
-            <div className="text-center">
-              <h3 className="font-bold text-lg">Cờ Caro</h3>
-              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">
-                {winner ? `Người thắng: ${winner}` : `Lượt đi: ${isXNext ? 'X' : 'O'}`}
-              </p>
-            </div>
-            <button onClick={resetGame} className="text-blue-500 text-sm font-bold">Chơi lại</button>
-          </div>
-
-          <div className="glass p-2 rounded-2xl overflow-hidden aspect-square grid grid-cols-[repeat(15,minmax(0,1fr))] bg-white/5 border-white/10 shadow-2xl">
-            {board.map((val, i) => (
-              <div 
-                key={i} 
-                onClick={() => handleSquareClick(i)}
-                className="border-[0.5px] border-white/5 aspect-square flex items-center justify-center text-[10px] font-black cursor-pointer active:bg-blue-500/20"
-              >
-                <span className={val === 'X' ? 'text-blue-500' : 'text-red-500'}>{val}</span>
-              </div>
-            ))}
-          </div>
-
-          {winner && (
-            <div className="mt-6 glass p-6 rounded-3xl border-blue-500/30 text-center animate-bounce">
-              <h2 className="text-2xl font-black text-blue-500">CHIẾN THẮNG!</h2>
-              <p className="text-sm opacity-70">+500 Stars đã được cộng</p>
-            </div>
-          )}
-        </div>
-      );
-
       return (
-        <div className="min-h-screen pb-32">
-          {/* Header (Chỉ hiện ở Lobby và Profile) */}
-          {view !== 'caro' && (
-            <div className="px-6 pt-6 pb-2 fade-up">
-               <div className="flex justify-between items-center glass p-3 px-5 rounded-[2rem] card-shadow">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg text-white">
-                      <Icons.Zap />
-                    </div>
-                    <div>
-                      <h1 className="text-lg font-extrabold tracking-tighter leading-none">WINZO</h1>
-                      <p className="text-[10px] text-blue-400 font-bold tracking-widest uppercase">Premium</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/5 py-2 px-4 rounded-2xl border border-white/5">
-                    <Icons.Star />
-                    <span className="font-extrabold text-sm">{userStars.toLocaleString()}</span>
-                  </div>
-                </div>
+        <div className="min-h-screen pb-24">
+          {/* Header */}
+          <div className="p-6">
+            <div className="glass p-4 rounded-[2rem] flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30"><Icons.Zap /></div>
+                <h1 className="font-extrabold text-lg tracking-tighter">WINZO</h1>
+              </div>
+              <div className="flex items-center gap-2 bg-white/5 py-2 px-4 rounded-2xl border border-white/5">
+                <Icons.Star /><span className="font-extrabold text-sm">{stars.toLocaleString()}</span>
+              </div>
             </div>
-          )}
+          </div>
 
           {view === 'lobby' && (
-            <div className="px-6 mt-6 space-y-6 fade-up">
+            <div className="px-6 space-y-6 animate-in fade-in duration-500">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-800 p-6 rounded-[2.5rem] shadow-xl">
+                <h2 className="text-xl font-extrabold">Chào mừng bạn!</h2>
+                <p className="text-white/60 text-xs mt-1 font-bold italic">Hãy chọn game để bắt đầu kiếm tiền</p>
+              </div>
               <div className="grid grid-cols-2 gap-4">
-                {/* Nút chơi Caro - Chỉ nút này có link vào game */}
-                <div onClick={() => setView('caro')} className="group relative bg-white/5 border border-white/10 p-5 rounded-[2.2rem] flex flex-col items-center gap-4 active:scale-95 transition-all card-shadow cursor-pointer">
-                  <div className="relative w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-500"><Icons.Trophy /></div>
-                  <div className="text-center">
-                    <span className="font-extrabold text-sm block">Cờ Caro</span>
-                    <span className="text-[9px] text-green-400 font-bold uppercase">Sẵn sàng</span>
-                  </div>
-                  <button className="w-full btn-primary py-2.5 rounded-2xl text-[10px] font-extrabold uppercase">Chơi ngay</button>
+                <div onClick={() => setView('caro')} className="glass p-5 rounded-[2.2rem] flex flex-col items-center gap-4 active:scale-95 transition-all">
+                  <div className="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-500"><Icons.Trophy /></div>
+                  <span className="font-extrabold text-sm">Cờ Caro</span>
+                  <button className="w-full bg-blue-600 py-2.5 rounded-2xl text-[10px] font-extrabold uppercase shadow-lg">Chơi Ngay</button>
                 </div>
-                
-                {/* Các game khác tạm để 'Sắp ra mắt' */}
                 {['Cờ Vua', 'Cờ Tướng', 'Cờ Vây'].map(g => (
-                  <div key={g} className="opacity-50 bg-white/5 border border-white/10 p-5 rounded-[2.2rem] flex flex-col items-center gap-4">
-                     <div className="w-16 h-16 bg-white/5 rounded-3xl flex items-center justify-center text-white/20"><Icons.Swords /></div>
-                     <span className="font-extrabold text-sm block text-white/40">{g}</span>
-                     <span className="text-[8px] font-bold uppercase text-white/20 tracking-tighter italic text-center">Coming Soon</span>
+                  <div key={g} className="glass opacity-40 p-5 rounded-[2.2rem] flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 bg-white/5 rounded-3xl flex items-center justify-center text-white/20"><Icons.Trophy /></div>
+                    <span className="font-extrabold text-sm text-white/40">{g}</span>
+                    <span className="text-[8px] font-bold uppercase">Sắp ra mắt</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {view === 'caro' && <CaroGame />}
-          {view === 'profile' && <div className="p-10 text-center uppercase font-black opacity-20">Trang cá nhân</div>}
+          {view === 'caro' && (
+            <div className="px-4 animate-in slide-in-from-bottom duration-500">
+              <div className="flex justify-between items-center mb-4 px-2">
+                <button onClick={() => setView('lobby')} className="text-white/40 font-bold text-xs">← Thoát</button>
+                <span className="font-black text-blue-500">{winner ? `THẮNG: ${winner}` : `LƯỢT: ${isXNext ? 'X' : 'O'}`}</span>
+                <button onClick={() => setBoard(Array(225).fill(null)) || setWinner(null)} className="text-xs text-white/40">Làm mới</button>
+              </div>
+              <div className="glass p-1 rounded-2xl grid grid-cols-[repeat(15,minmax(0,1fr))] bg-white/5 border-white/10 shadow-2xl overflow-hidden">
+                {board.map((v, i) => (
+                  <div key={i} onClick={() => handleCellClick(i)} className="caro-cell">
+                    <span className={v === 'X' ? 'text-blue-500' : 'text-red-500'}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* Tab Navigation */}
+          {view === 'profile' && (
+            <div className="p-10 text-center animate-in fade-in">
+              <div className="w-24 h-24 bg-blue-600 rounded-full mx-auto flex items-center justify-center mb-4"><Icons.User /></div>
+              <h2 className="text-2xl font-black italic">Player #001</h2>
+            </div>
+          )}
+
+          {/* Navigation */}
           <div className="fixed bottom-8 left-8 right-8 z-50">
-            <nav className="glass border-white/10 h-20 rounded-[2.5rem] flex items-center justify-around px-6">
-              <button onClick={() => setView('lobby')} className={`p-4 transition-all ${view === 'lobby' ? 'text-blue-500' : 'text-white/30'}`}><Icons.Home /></button>
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/50 active:scale-90"><Icons.Zap /></div>
-              <button onClick={() => setView('profile')} className={`p-4 transition-all ${view === 'profile' ? 'text-blue-500' : 'text-white/30'}`}><Icons.User /></button>
+            <nav className="glass h-20 rounded-[2.5rem] flex items-center justify-around px-6 shadow-2xl shadow-blue-900/20">
+              <button onClick={() => setView('lobby')} className={view === 'lobby' ? 'text-blue-500' : 'text-white/30'}><Icons.Home /></button>
+              <button onClick={() => setView('profile')} className={view === 'profile' ? 'text-blue-500' : 'text-white/30'}><Icons.User /></button>
             </nav>
           </div>
         </div>
       );
     };
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-</script>
+    try {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    } catch (e) {
+      document.getElementById('root').innerHTML = `<div style="color:red; padding:20px; text-align:center;">LỖI: ${e.message}</div>`;
+    }
+  </script>
+</body>
+</html>
