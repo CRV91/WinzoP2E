@@ -36,15 +36,18 @@
   <script type="text/babel" src="App.js"></script>
 
   <script type="text/babel">
-    const renderApp = () => {
-      if (window.App) {
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<window.App />);
-      } else {
-        setTimeout(renderApp, 50);
-      }
-    };
-    renderApp();
-  </script>
+  const renderApp = () => {
+    // Kiểm tra xem biến App đã được gán vào window chưa
+    if (window.WinzoApp) { 
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      // Gán vào một biến viết hoa để React nhận diện đúng là Component
+      const MainComponent = window.WinzoApp;
+      root.render(<MainComponent />);
+    } else {
+      setTimeout(renderApp, 50);
+    }
+  };
+  renderApp();
+</script>
 </body>
 </html>
