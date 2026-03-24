@@ -1,9 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
-import { 
+// Khai báo các biến từ cửa sổ trình duyệt (đã nạp qua CDN)
+const { useState, useEffect } = React;
+const { 
   Trophy, Star, Swords, LayoutGrid, Award, 
   Home, User, Globe, Grid3X3, Copy, 
   CheckCircle2, Zap, Settings, ChevronRight 
-} from 'lucide-react';
+} = lucide;
 
 const tg = window.Telegram?.WebApp;
 
@@ -44,7 +45,7 @@ const App = () => {
   const [view, setView] = useState('lobby');
   const [selectedGame, setSelectedGame] = useState(GAME_MODES[0]);
   const [userStars, setUserStars] = useState(2500);
-  const [gameStatus, setGameStatus] = useState('searching'); // searching, found, result
+  const [gameStatus, setGameStatus] = useState('searching');
   const [isWinner, setIsWinner] = useState(false);
   const [copied, setCopied] = useState(false);
   const [teleUser, setTeleUser] = useState(null);
@@ -69,7 +70,6 @@ const App = () => {
     setGameStatus('searching');
     setView('matchmaking');
     
-    // Giả lập ghép trận
     setTimeout(() => {
       setGameStatus('found');
       tg?.HapticFeedback?.notificationOccurred('warning');
@@ -88,7 +88,6 @@ const App = () => {
     }, 2000);
   };
 
-  // --- VIEW: LOBBY ---
   const Lobby = () => (
     <div className="p-4 space-y-6">
       <header className="flex justify-between items-center bg-gray-900/50 p-4 rounded-3xl border border-white/5">
@@ -103,7 +102,6 @@ const App = () => {
           <span className="font-bold text-yellow-500">{userStars.toLocaleString()}</span>
         </div>
       </header>
-
       <div className="grid grid-cols-4 gap-2 bg-gray-900 p-1 rounded-2xl">
         {GAME_MODES.map((game) => (
           <button 
@@ -116,7 +114,6 @@ const App = () => {
           </button>
         ))}
       </div>
-
       <div className="space-y-3">
         {TOURNAMENTS.map((tr) => (
           <div key={tr.id} className="bg-gray-800/30 border border-white/5 rounded-3xl p-4 flex items-center justify-between group active:scale-95 transition-transform">
@@ -141,7 +138,6 @@ const App = () => {
     </div>
   );
 
-  // --- VIEW: MATCHMAKING ---
   const Matchmaking = () => (
     <div className="fixed inset-0 bg-[#050608] z-50 flex flex-col items-center justify-center p-6 text-center">
       {gameStatus === 'searching' && (
@@ -150,9 +146,8 @@ const App = () => {
           <h2 className="text-2xl font-black italic animate-pulse">{t.search_opponent}</h2>
         </div>
       )}
-
       {gameStatus === 'found' && (
-        <div className="flex items-center gap-8 animate-in zoom-in duration-300">
+        <div className="flex items-center gap-8">
           <div className="text-center space-y-2">
             <div className="w-20 h-20 bg-blue-600 rounded-3xl border-4 border-white/10 overflow-hidden flex items-center justify-center">
               {teleUser?.photo_url ? <img src={teleUser.photo_url} alt="me" /> : <User size={40} />}
@@ -168,9 +163,8 @@ const App = () => {
           </div>
         </div>
       )}
-
       {gameStatus === 'result' && (
-        <div className="w-full max-w-sm space-y-8 animate-in slide-in-from-bottom duration-500">
+        <div className="w-full max-w-sm space-y-8">
           <div className={`p-10 rounded-[3rem] border-4 ${isWinner ? 'bg-green-500/10 border-green-500' : 'bg-red-500/10 border-red-500'}`}>
             <h2 className={`text-5xl font-black mb-2 ${isWinner ? 'text-green-500' : 'text-red-500'}`}>{isWinner ? 'WIN' : 'LOSE'}</h2>
             <p className="text-gray-400 font-medium">{isWinner ? 'Bạn đã thắng trận đấu!' : 'Hẹn gặp lại bạn lần sau'}</p>
@@ -181,7 +175,6 @@ const App = () => {
     </div>
   );
 
-  // --- VIEW: PROFILE ---
   const Profile = () => (
     <div className="p-4 space-y-6">
       <div className="flex flex-col items-center py-8">
@@ -191,7 +184,6 @@ const App = () => {
         <h2 className="text-2xl font-black">{teleUser?.first_name || "Player_Winzo"}</h2>
         <span className="bg-blue-500/10 text-blue-500 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest mt-2">Level 12 • Pro</span>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-900 p-5 rounded-3xl border border-white/5">
           <p className="text-[10px] text-gray-500 font-black uppercase mb-1">{t.balance}</p>
@@ -202,17 +194,6 @@ const App = () => {
           <p className="text-xl font-black text-blue-500">#1,240</p>
         </div>
       </div>
-
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white">
-        <h3 className="font-black text-lg mb-1">{t.affiliate_title}</h3>
-        <p className="text-xs text-white/70 mb-4">Nhận ngay 100⭐ cho mỗi người bạn tham gia.</p>
-        <div className="flex gap-2">
-          <div className="flex-1 bg-black/20 py-3 px-4 rounded-xl font-mono text-sm">WINZO-{teleUser?.id || '6789'}</div>
-          <button onClick={() => {setCopied(true); setTimeout(() => setCopied(false), 2000);}} className="bg-white text-black p-3 rounded-xl transition-transform active:scale-90">
-            {copied ? <CheckCircle2 size={20} className="text-green-500" /> : <Copy size={20} />}
-          </button>
-        </div>
-      </div>
     </div>
   );
 
@@ -221,8 +202,6 @@ const App = () => {
       {view === 'lobby' && <Lobby />}
       {view === 'matchmaking' && <Matchmaking />}
       {view === 'profile' && <Profile />}
-
-      {/* Navigation Bar */}
       <nav className="fixed bottom-6 left-6 right-6 bg-gray-900/80 backdrop-blur-xl border border-white/10 h-20 rounded-[2.5rem] flex items-center justify-around px-4 shadow-2xl z-40">
         <button onClick={() => setView('lobby')} className={`p-4 rounded-2xl transition-all ${view === 'lobby' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>
           <Home size={24} />
@@ -238,5 +217,5 @@ const App = () => {
   );
 };
 
-export default App;
+// Gán vào biến toàn cục window để index.html truy cập được
 window.App = App;
