@@ -1,4 +1,4 @@
-// KHÔNG DÙNG IMPORT. Lấy trực tiếp từ các thư viện đã nạp ở index.html
+// KHÔNG DÙNG IMPORT/EXPORT. Lấy trực tiếp từ thư viện đã nạp ở index.html
 const { useState, useEffect } = React;
 const { 
   Trophy, Star, Swords, LayoutGrid, Award, 
@@ -217,5 +217,5 @@ const App = () => {
   );
 };
 
-// ĐƯA BIẾN RA NGOÀI ĐỂ INDEX.HTML NHẬN DIỆN
+// QUAN TRỌNG: Gán App vào window để index.html nhận diện
 window.WinzoApp = App;
