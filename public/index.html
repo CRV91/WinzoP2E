@@ -3,29 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>WINZO P2E</title>
+  <title>WINZO P2E - Telegram Mini App</title>
+  
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <style>
-    body { background-color: #050608; margin: 0; color: white; user-select: none; }
+    body {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      background-color: #050608;
+      margin: 0;
+      color: white;
+      font-family: sans-serif;
+    }
+    #root { min-height: 100vh; }
   </style>
 </head>
 <body>
   <div id="root"></div>
+
   <script type="text/babel" src="../src/App.js"></script>
+
   <script type="text/babel">
-    const renderApp = () => {
+    const startApp = () => {
       if (window.WinzoApp) {
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        const Main = window.WinzoApp;
-        root.render(<Main />);
-      } else { setTimeout(renderApp, 50); }
+        const MainComponent = window.WinzoApp;
+        root.render(<MainComponent />);
+      } else {
+        setTimeout(startApp, 50); // Thử lại sau 50ms nếu file App.js chưa load xong
+      }
     };
-    renderApp();
+    startApp();
   </script>
 </body>
 </html>
