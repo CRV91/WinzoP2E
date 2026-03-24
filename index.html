@@ -7,130 +7,150 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #050608; color: white; font-family: sans-serif; margin: 0; -webkit-user-select: none; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .board-container { 
-            display: grid; 
-            gap: 1px; 
-            background: rgba(255,255,255,0.1); 
-            border: 1px solid rgba(255,255,255,0.2);
-            margin: 0 auto;
-            max-width: 95vw;
-        }
-        .cell { background: #0b0e14; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        body { background: #050608; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; overflow: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .btn-gradient { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .tab-active { color: #3b82f6; transform: scale(1.1); }
+        .bg-glow { position: fixed; inset: 0; background: radial-gradient(circle at 50% -20%, #1e3a8a 0%, transparent 50%); z-index: -1; }
+        
+        /* Bàn cờ tối ưu */
+        .board-container { display: grid; gap: 1px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.1); margin: 0 auto; border-radius: 8px; overflow: hidden; }
+        .cell { background: #0b0e14; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; }
         .cell:active { background: #1e293b; }
-        .nav-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 70px; display: flex; justify-content: space-around; align-items: center; border-radius: 40px; z-index: 100; }
+
+        /* Animation */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div id="app-root">
-        </div>
+    <div class="bg-glow"></div>
+    <div id="app-root" class="pb-32"></div>
 
     <script>
-        // Khởi tạo Telegram
         const tg = window.Telegram?.WebApp;
-        if (tg) { tg.ready(); tg.expand(); tg.headerColor = '#050608'; }
+        if (tg) { tg.ready(); tg.expand(); }
 
         let state = {
-            view: 'lobby', // lobby hoặc game
+            view: 'lobby', // lobby, game, friends
             stars: 2500,
+            referrals: 12,
+            refLink: "https://t.me/WinzoGameBot?start=user123",
             currentGame: null,
-            config: {
-                caro: { name: 'Cờ Caro', cols: 15, size: 225, color: '#3b82f6' },
-                chess: { name: 'Cờ Vua', cols: 8, size: 64, color: '#818cf8' },
-                xiangqi: { name: 'Cờ Tướng', cols: 9, size: 90, color: '#ef4444' },
-                go: { name: 'Cờ Vây', cols: 13, size: 169, color: '#10b981' }
+            games: {
+                caro: { name: 'Cờ Caro', cols: 15, size: 225, color: '#3b82f6', icon: '🏆' },
+                chess: { name: 'Cờ Vua', cols: 8, size: 64, color: '#818cf8', icon: '⚔️' },
+                xiangqi: { name: 'Cờ Tướng', cols: 9, size: 90, color: '#ef4444', icon: '🏯' },
+                go: { name: 'Cờ Vây', cols: 13, size: 169, color: '#10b981', icon: '☯️' }
             }
         };
 
         function render() {
             const root = document.getElementById('app-root');
-            
+            let content = '';
+
             if (state.view === 'lobby') {
-                root.innerHTML = `
-                    <div class="p-6">
-                        <div class="glass p-5 rounded-[2rem] flex justify-between items-center mb-8">
-                            <span class="font-black text-2xl italic">WINZO</span>
-                            <div class="text-yellow-500 font-bold">${state.stars} ⭐</div>
+                content = `
+                    <div class="p-6 fade-in">
+                        <div class="glass p-5 rounded-[2rem] flex justify-between items-center mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-bold">W</div>
+                                <span class="font-black text-xl italic tracking-tighter">WINZO</span>
+                            </div>
+                            <div class="bg-white/5 px-4 py-2 rounded-2xl border border-white/10 font-bold text-yellow-500">
+                                ${state.stars.toLocaleString()} ⭐
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            ${Object.keys(state.config).map(key => `
-                                <div onclick="joinGame('${key}')" class="glass p-6 rounded-[2.5rem] flex flex-col items-center gap-4 active:scale-95 transition-all">
-                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-white/5" style="color: ${state.config[key].color}">
-                                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
-                                    </div>
-                                    <span class="font-bold text-sm">${state.config[key].name}</span>
-                                    <div class="text-[9px] opacity-40 font-bold uppercase">Chạm để chơi</div>
+                            ${Object.keys(state.games).map(key => `
+                                <div onclick="changeView('game', '${key}')" class="glass p-5 rounded-[2.5rem] flex flex-col items-center gap-3 active:scale-95 transition-all">
+                                    <div class="text-3xl mb-1">${state.games[key].icon}</div>
+                                    <span class="font-bold text-sm text-center">${state.games[key].name}</span>
+                                    <div class="w-full bg-white/5 py-2 rounded-xl text-[9px] font-bold text-center uppercase opacity-60">Thách đấu</div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
                 `;
-            } else {
-                const c = state.config[state.currentGame];
-                let boardHtml = '';
-                for(let i=0; i<c.size; i++) {
-                    boardHtml += `<div class="cell" onclick="handleCellClick(${i})"></div>`;
-                }
+            } 
+            else if (state.view === 'friends') {
+                content = `
+                    <div class="p-6 fade-in">
+                        <h2 class="text-2xl font-black mb-2 italic">MỜI BẠN BÈ</h2>
+                        <p class="text-white/50 text-xs mb-6 font-medium">Nhận ngay 500 ⭐ cho mỗi người bạn tham gia</p>
+                        
+                        <div class="glass p-6 rounded-[2.5rem] mb-6 text-center">
+                            <div class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Link giới thiệu</div>
+                            <div class="text-xs truncate bg-black/40 p-3 rounded-xl border border-white/5 mb-4">${state.refLink}</div>
+                            <button onclick="copyRef()" class="w-full btn-gradient py-4 rounded-2xl font-black text-sm uppercase">Copy Link & Mời</button>
+                        </div>
 
-                root.innerHTML = `
-                    <div class="p-4 animate-in fade-in">
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-white/40 uppercase px-2">Danh sách bạn bè (${state.referrals})</h3>
+                            <div class="glass p-4 rounded-3xl flex justify-between items-center opacity-60">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-white/10 rounded-full"></div>
+                                    <span class="text-sm font-bold">Người chơi ẩn danh</span>
+                                </div>
+                                <span class="text-xs text-green-500 font-bold">+500</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (state.view === 'game') {
+                const g = state.games[state.currentGame];
+                content = `
+                    <div class="p-4 fade-in">
                         <div class="flex justify-between items-center mb-6">
-                            <button onclick="goHome()" class="text-white/40 font-bold text-sm">← QUAY LẠI</button>
-                            <h2 style="color: ${c.color}" class="font-black italic uppercase">${c.name}</h2>
+                            <button onclick="changeView('lobby')" class="w-10 h-10 glass rounded-full flex items-center justify-center text-xs font-bold">←</button>
+                            <h2 style="color: ${g.color}" class="font-black italic uppercase">${g.name}</h2>
                             <div class="w-10"></div>
                         </div>
-
-                        <div class="board-container" style="grid-template-columns: repeat(${c.cols}, 1fr);">
-                            ${boardHtml}
+                        <div class="board-container" style="grid-template-columns: repeat(${g.cols}, 1fr);">
+                            ${Array(g.size).fill(0).map(() => `<div class="cell" onclick="haptic()"></div>`).join('')}
                         </div>
-
-                        <div class="mt-8 glass p-6 rounded-[2rem] text-center border-blue-500/20">
-                            <p class="text-[10px] text-white/30 font-bold tracking-widest mb-1">MÁY CHỦ</p>
-                            <p class="text-xs font-bold text-blue-400">Đang đồng bộ hóa bàn cờ...</p>
+                        <div class="mt-8 glass p-6 rounded-[2.5rem] text-center">
+                            <div class="animate-pulse text-blue-400 font-bold text-sm italic">Đang chờ đối thủ...</div>
                         </div>
                     </div>
                 `;
             }
 
-            // Render Nav Bar
-            const nav = document.createElement('div');
-            nav.className = 'nav-bar glass shadow-2xl';
-            nav.innerHTML = `
-                <button onclick="goHome()" style="color: ${state.view === 'lobby' ? '#3b82f6' : '#555'}">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-                </button>
-                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                    <svg width="20" height="20" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            // Navigation Bar
+            content += `
+                <div class="fixed bottom-8 left-8 right-8 glass h-20 rounded-[2.5rem] flex items-center justify-around px-6 shadow-2xl z-50">
+                    <button onclick="changeView('lobby')" class="${state.view === 'lobby' ? 'tab-active text-blue-500' : 'text-white/30'}">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                    </button>
+                    <div onclick="changeView('lobby')" class="w-12 h-12 btn-gradient rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                        <svg width="20" height="20" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
+                    <button onclick="changeView('friends')" class="${state.view === 'friends' ? 'tab-active text-blue-500' : 'text-white/30'}">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </button>
                 </div>
-                <button style="color: #555">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                </button>
             `;
-            root.appendChild(nav);
+
+            root.innerHTML = content;
         }
 
-        // Logic điều hướng
-        window.joinGame = function(key) {
-            state.view = 'game';
-            state.currentGame = key;
+        window.changeView = (v, game = null) => {
+            state.view = v;
+            state.currentGame = game;
             tg?.HapticFeedback?.impactOccurred('medium');
             render();
         };
 
-        window.goHome = function() {
-            state.view = 'lobby';
-            state.currentGame = null;
-            render();
+        window.copyRef = () => {
+            navigator.clipboard.writeText(state.refLink);
+            tg?.showPopup({ message: "Đã copy link mời bạn bè!" });
+            tg?.HapticFeedback?.notificationOccurred('success');
         };
 
-        window.handleCellClick = function(i) {
-            tg?.HapticFeedback?.impactOccurred('light');
-            // Logic đặt quân cờ sẽ thêm ở đây
-        };
+        window.haptic = () => tg?.HapticFeedback?.impactOccurred('light');
 
-        // Khởi chạy lần đầu
         render();
     </script>
 </body>
