@@ -218,4 +218,4 @@ const App = () => {
 };
 
 // Gán vào biến toàn cục window để index.html truy cập được
-window.App = App;
+window.WinzoApp = App;
