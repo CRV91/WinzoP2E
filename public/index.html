@@ -6,9 +6,11 @@
   <title>WINZO P2E - Telegram Mini App</title>
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -20,9 +22,7 @@
       background-color: #050608;
       margin: 0;
       color: white;
-      font-family: sans-serif;
     }
-    #root { min-height: 100vh; }
   </style>
 </head>
 <body>
@@ -31,16 +31,16 @@
   <script type="text/babel" src="../src/App.js"></script>
 
   <script type="text/babel">
-    const startApp = () => {
+    const renderApp = () => {
       if (window.WinzoApp) {
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        const MainComponent = window.WinzoApp;
-        root.render(<MainComponent />);
+        const Main = window.WinzoApp;
+        root.render(<Main />);
       } else {
-        setTimeout(startApp, 50); // Thử lại sau 50ms nếu file App.js chưa load xong
+        setTimeout(renderApp, 50); // Đợi App.js tải xong
       }
     };
-    startApp();
+    renderApp();
   </script>
 </body>
 </html>
