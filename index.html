@@ -13,99 +13,41 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
-    body {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-      background-color: #050608;
-      margin: 0;
-      color: white;
-      font-family: sans-serif;
-    }
+    body { background-color: #050608; margin: 0; color: white; font-family: sans-serif; overflow: hidden; }
     #root { min-height: 100vh; }
+    /* Loading spinner đơn giản nếu React chưa load xong */
+    .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-weight: bold; }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div class="loading-screen">ĐANG TẢI WINZO...</div>
+  </div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const { Trophy, Star, Swords, LayoutGrid, Award, Home, User, Globe, Grid3X3, Copy, CheckCircle2, Zap } = lucide;
-
-    const tg = window.Telegram?.WebApp;
-
-    const TRANSLATIONS = {
-      vi: {
-        brand: "WINZO", lobby: "Sảnh Game", profile: "Cá nhân",
-        search_opponent: "Đang ghép trận...", match_found: "Đã tìm thấy đối thủ!",
-        victory: "CHIẾN THẮNG!", defeat: "THẤT BẠI", balance: "Số dư", rank: "Hạng",
-        game_names: { chess: "Cờ Vua", xiangqi: "Cờ Tướng", go: "Cờ Vây", caro: "Cờ Caro" }
-      },
-      en: {
-        brand: "WINZO", lobby: "Lobby", profile: "Profile",
-        search_opponent: "Matching...", match_found: "Opponent Found!",
-        victory: "VICTORY!", defeat: "DEFEAT", balance: "Balance", rank: "Rank",
-        game_names: { chess: "Chess", xiangqi: "Xiangqi", go: "Go", caro: "Gomoku" }
-      }
-    };
-
-    const GAME_MODES = [
-      { id: 'chess', icon: <Swords size={18} /> },
-      { id: 'xiangqi', icon: <Award size={18} /> },
-      { id: 'go', icon: <LayoutGrid size={18} /> },
-      { id: 'caro', icon: <Grid3X3 size={18} /> },
-    ];
-
-    const TOURNAMENTS = [
-      { id: 1, name: 'Solo Beginner', fee: 100, prize: 180 },
-      { id: 2, name: 'Pro Battle', fee: 500, prize: 900 },
-      { id: 3, name: 'King Arena', fee: 1000, prize: 1800 },
-    ];
+    const { Trophy, Star, Swords, LayoutGrid, Award, Home, User, Globe, Grid3X3, Zap } = lucide;
 
     const App = () => {
-      const [lang, setLang] = useState('vi');
       const [view, setView] = useState('lobby');
-      const [selectedGame, setSelectedGame] = useState(GAME_MODES[0]);
       const [userStars, setUserStars] = useState(2500);
-      const [gameStatus, setGameStatus] = useState('searching');
-      const [isWinner, setIsWinner] = useState(false);
-      const [teleUser, setTeleUser] = useState(null);
-
-      const t = TRANSLATIONS[lang];
 
       useEffect(() => {
-        if (tg) {
-          tg.ready();
-          tg.expand();
-          setTeleUser(tg.initDataUnsafe?.user);
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
         }
       }, []);
 
-      const handleJoinGame = (tourney) => {
-        if (userStars < tourney.fee) return;
-        setUserStars(prev => prev - tourney.fee);
-        setGameStatus('searching');
-        setView('matchmaking');
-        
-        setTimeout(() => {
-          setGameStatus('found');
-          setTimeout(() => {
-            const win = Math.random() > 0.5;
-            setIsWinner(win);
-            setGameStatus('result');
-            if (win) setUserStars(p => p + tourney.prize);
-          }, 2000);
-        }, 1500);
-      };
-
-      const Lobby = () => (
-        <div className="p-4 space-y-6">
-          <header className="flex justify-between items-center bg-gray-900/50 p-4 rounded-3xl border border-white/5">
+      return (
+        <div className="min-h-screen bg-[#050608] text-white p-4">
+          {/* Header */}
+          <header className="flex justify-between items-center bg-gray-900/50 p-4 rounded-3xl border border-white/5 mb-6">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Zap size={20} className="fill-white text-white" />
               </div>
-              <span className="font-black text-xl tracking-tighter">{t.brand}</span>
+              <span className="font-black text-xl tracking-tighter">WINZO</span>
             </div>
             <div className="flex items-center gap-2 bg-yellow-500/10 px-4 py-2 rounded-2xl border border-yellow-500/20">
               <Star size={16} className="text-yellow-500 fill-yellow-500" />
@@ -113,86 +55,35 @@
             </div>
           </header>
 
-          <div className="grid grid-cols-4 gap-2 bg-gray-900 p-1 rounded-2xl">
-            {GAME_MODES.map((game) => (
-              <button 
-                key={game.id} 
-                onClick={() => setSelectedGame(game)}
-                className={`flex flex-col items-center py-3 rounded-xl transition-all ${selectedGame.id === game.id ? 'bg-blue-600 text-white' : 'text-gray-500'}`}
-              >
-                {game.icon}
-                <span className="text-[10px] mt-1 font-bold">{t.game_names[game.id]}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            {TOURNAMENTS.map((tr) => (
-              <div key={tr.id} className="bg-gray-800/30 border border-white/5 rounded-3xl p-4 flex items-center justify-between active:scale-95 transition-transform">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-500">
-                    <Trophy size={24} />
+          {/* Nội dung Sảnh Game */}
+          {view === 'lobby' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold px-2">Sảnh Game P2E</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {['Cờ Vua', 'Cờ Tướng', 'Cờ Vây', 'Caro'].map((game) => (
+                  <div key={game} className="bg-gray-800/40 p-6 rounded-3xl border border-white/5 flex flex-col items-center gap-3 active:scale-95 transition-transform">
+                    <Trophy className="text-blue-500" size={32} />
+                    <span className="font-bold">{game}</span>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm">{tr.name}</h3>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">Phí: {tr.fee} ⭐</p>
-                  </div>
-                </div>
-                <button onClick={() => handleJoinGame(tr)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-black">
-                  {tr.prize} ⭐
-                </button>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      );
-
-      const Matchmaking = () => (
-        <div className="fixed inset-0 bg-[#050608] z-50 flex flex-col items-center justify-center p-6 text-center">
-          {gameStatus === 'searching' && <h2 className="text-2xl font-black italic animate-pulse">{t.search_opponent}</h2>}
-          {gameStatus === 'found' && <div className="text-4xl font-black italic text-blue-500 animate-bounce">VS</div>}
-          {gameStatus === 'result' && (
-            <div className="space-y-8 animate-in slide-in-from-bottom">
-              <h2 className={`text-5xl font-black ${isWinner ? 'text-green-500' : 'text-red-500'}`}>{isWinner ? 'WIN' : 'LOSE'}</h2>
-              <button onClick={() => setView('lobby')} className="bg-white text-black px-10 py-4 rounded-2xl font-black">XÁC NHẬN</button>
             </div>
           )}
-        </div>
-      );
 
-      const Profile = () => (
-        <div className="p-4 space-y-6 flex flex-col items-center py-8">
-          <div className="w-28 h-28 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center border-4 border-gray-900 shadow-2xl overflow-hidden mb-4">
-            {teleUser?.photo_url ? <img src={teleUser.photo_url} className="w-full h-full object-cover" /> : <User size={48} />}
-          </div>
-          <h2 className="text-2xl font-black">{teleUser?.first_name || "Player"}</h2>
-          <div className="grid grid-cols-2 gap-3 w-full">
-            <div className="bg-gray-900 p-5 rounded-3xl border border-white/5 text-center">
-              <p className="text-[10px] text-gray-500 font-black uppercase">{t.balance}</p>
-              <p className="text-xl font-black text-yellow-500">{userStars.toLocaleString()} ⭐</p>
-            </div>
-            <div className="bg-gray-900 p-5 rounded-3xl border border-white/5 text-center">
-              <p className="text-[10px] text-gray-500 font-black uppercase">{t.rank}</p>
-              <p className="text-xl font-black text-blue-500">#1,240</p>
-            </div>
-          </div>
-        </div>
-      );
-
-      return (
-        <div className="min-h-screen bg-[#050608] text-white selection:bg-blue-500/30 pb-24">
-          {view === 'lobby' && <Lobby />}
-          {view === 'matchmaking' && <Matchmaking />}
-          {view === 'profile' && <Profile />}
-          <nav className="fixed bottom-6 left-6 right-6 bg-gray-900/80 backdrop-blur-xl border border-white/10 h-20 rounded-[2.5rem] flex items-center justify-around px-4 shadow-2xl z-40">
-            <button onClick={() => setView('lobby')} className={`p-4 rounded-2xl ${view === 'lobby' ? 'bg-blue-600' : 'text-gray-500'}`}><Home size={24} /></button>
-            <button onClick={() => setLang(l => l === 'vi' ? 'en' : 'vi')} className="p-4 text-gray-500"><Globe size={24} /></button>
-            <button onClick={() => setView('profile')} className={`p-4 rounded-2xl ${view === 'profile' ? 'bg-blue-600' : 'text-gray-500'}`}><User size={24} /></button>
+          {/* Navigation */}
+          <nav className="fixed bottom-6 left-6 right-6 bg-gray-900/90 backdrop-blur-xl border border-white/10 h-20 rounded-[2.5rem] flex items-center justify-around px-4 shadow-2xl">
+            <button onClick={() => setView('lobby')} className={`p-4 rounded-2xl ${view === 'lobby' ? 'bg-blue-600' : 'text-gray-500'}`}>
+              <Home size={24} />
+            </button>
+            <button onClick={() => setView('profile')} className={`p-4 rounded-2xl ${view === 'profile' ? 'bg-blue-600' : 'text-gray-500'}`}>
+              <User size={24} />
+            </button>
           </nav>
         </div>
       );
     };
 
+    // Render trực tiếp
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
