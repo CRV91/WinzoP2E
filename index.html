@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>WINZO P2E - COMPACT</title>
+    <title>WINZO P2E - GLOBAL</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,172 +12,250 @@
         :root {
             --bg: #050608;
             --blue: #3b82f6;
+            --glass: rgba(255, 255, 255, 0.03);
         }
 
         body { 
             background: var(--bg); 
-            color: #e2e8f0; 
+            color: #f1f5f9; 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
             overflow: hidden; 
             -webkit-font-smoothing: antialiased;
             user-select: none;
+            touch-action: manipulation;
         }
 
         .font-game { font-family: 'Orbitron', sans-serif; }
 
         .glass { 
-            background: rgba(255, 255, 255, 0.03); 
+            background: var(--glass); 
             backdrop-filter: blur(15px); 
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .btn-blue { 
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); 
+        .btn-primary { 
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); 
             transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
-        .btn-blue:active { transform: scale(0.95); }
+        .btn-primary:active { transform: scale(0.96); opacity: 0.9; }
 
-        /* Bàn cờ tối ưu TO RÕ */
+        /* Optimized Board - Max Visibility */
         .board-container {
             width: 100vw;
             height: 100vw;
-            max-width: 500px;
-            max-height: 500px;
+            max-width: 450px;
+            max-height: 450px;
             margin: 0 auto;
-            position: relative;
         }
 
         .board-grid { 
-            display: grid; gap: 1px; background: rgba(255,255,255,0.15); 
-            width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.1);
+            display: grid; gap: 1px; background: rgba(255,255,255,0.1); 
+            width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.05);
         }
 
         .cell { 
-            background: #0d1117; display: flex; 
+            background: #0a0c12; display: flex; 
             align-items: center; justify-content: center;
-            transition: background 0.1s;
+            position: relative;
         }
         .cell:active { background: #1e293b; }
-        .cell span { font-size: 1.2rem; font-weight: 900; }
+        .cell span { font-size: 1.1rem; font-weight: 800; }
 
-        /* Modal Styles */
+        /* Modal Transitions */
         .modal {
             position: fixed; inset: 0; z-index: 100;
-            display: none; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
+            display: none; align-items: flex-end; justify-content: center;
+            background: rgba(0,0,0,0.7);
         }
-        .modal.active { display: flex; animation: fadeIn 0.2s; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal.active { display: flex; animation: slideUp 0.3s ease-out; }
         
-        /* Compact layout tweaks */
-        .compact-card { padding: 12px 16px; border-radius: 1.5rem; }
+        .modal-content {
+            width: 100%; max-width: 500px;
+            background: #0f172a;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-radius: 2rem 2rem 0 0;
+            padding: 2rem;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .nav-item.active { color: var(--blue); transform: scale(1.1); }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="app" class="h-screen flex flex-col relative overflow-hidden"></div>
 
-    <!-- Modal Nạp/Rút -->
-    <div id="wallet-modal" class="modal">
-        <div class="glass p-6 rounded-[2rem] w-full max-w-sm border-blue-500/30">
-            <h2 id="modal-title" class="font-game text-center text-lg mb-4 italic">NẠP STARS</h2>
-            <div class="space-y-3">
-                <input type="number" id="wallet-amount" placeholder="Nhập số Stars..." class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-white outline-none focus:border-blue-500">
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="setAmount(100)" class="bg-white/5 py-2 rounded-lg text-xs">+100</button>
-                    <button onclick="setAmount(500)" class="bg-white/5 py-2 rounded-lg text-xs">+500</button>
-                    <button onclick="setAmount(1000)" class="bg-white/5 py-2 rounded-lg text-xs">+1k</button>
+    <!-- Payment/Wallet Modal -->
+    <div id="wallet-modal" class="modal" onclick="if(event.target === this) closeModal()">
+        <div class="modal-content glass">
+            <h2 id="modal-title" class="font-game text-center text-sm mb-6 tracking-widest text-blue-400">DEPOSIT STARS</h2>
+            
+            <div class="space-y-4">
+                <div class="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                    <p class="text-[10px] text-white/40 mb-1 font-bold uppercase">Enter Amount</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl text-yellow-500">⭐</span>
+                        <input type="number" id="wallet-amount" placeholder="0" class="bg-transparent w-full text-2xl font-black outline-none text-white">
+                    </div>
                 </div>
-                <button onclick="processWallet()" id="modal-btn" class="w-full btn-blue py-4 rounded-xl font-black text-xs uppercase mt-4">XÁC NHẬN</button>
-                <button onclick="closeModal()" class="w-full text-white/40 py-2 text-[10px] font-bold">HỦY BỎ</button>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setAmount(50)" class="bg-white/5 py-3 rounded-xl text-xs font-bold border border-white/5">+50</button>
+                    <button onclick="setAmount(250)" class="bg-white/5 py-3 rounded-xl text-xs font-bold border border-white/5">+250</button>
+                    <button onclick="setAmount(1000)" class="bg-white/5 py-3 rounded-xl text-xs font-bold border border-white/5">+1k</button>
+                </div>
+
+                <button onclick="processTransaction()" id="modal-btn" class="w-full btn-primary py-4 rounded-2xl font-black text-xs uppercase mt-4">CONFIRM PAYMENT</button>
+                <button onclick="closeModal()" class="w-full text-white/30 py-2 text-[10px] font-bold uppercase tracking-widest mt-2">Close</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Safely access Telegram WebApp
         const tg = window.Telegram?.WebApp;
-        if (tg) { tg.ready(); tg.expand(); tg.headerColor = '#050608'; }
-
-        let state = {
-            lang: 'vi',
-            view: 'lobby',
-            stars: 2500,
-            currentGame: null,
-            board: [],
-            walletAction: 'deposit', // deposit or withdraw
-            games: {
-                caro: { name: 'CARO', cols: 15, size: 225, icon: '🏆', color: '#3b82f6', piece: 'X', bot: 'O' },
-                chess: { name: 'CHESS', cols: 8, size: 64, icon: '⚔️', color: '#818cf8', piece: '♟', bot: '♙' },
-                xiangqi: { name: 'CỜ TƯỚNG', cols: 9, size: 90, icon: '🏯', color: '#ef4444', piece: '帥', bot: '卒' },
-                go: { name: 'CỜ VÂY', cols: 13, size: 169, icon: '☯️', color: '#10b981', piece: '⚫', bot: '⚪' }
+        
+        // Helper function for alerts compatible with older versions
+        const notify = (msg) => {
+            if (tg?.showAlert) {
+                tg.showAlert(msg);
+            } else {
+                // Fallback for very old versions or browser testing
+                console.log("App Notification:", msg);
             }
         };
 
-        function setView(v) { state.view = v; render(); }
-        function setAmount(a) { document.getElementById('wallet-amount').value = a; }
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            // Check version before using newer features
+            if (tg.isVersionAtLeast('6.1')) {
+                tg.headerColor = '#050608';
+                tg.backgroundColor = '#050608';
+            }
+        }
+
+        let state = {
+            view: 'lobby',
+            stars: 1250,
+            currentGame: null,
+            board: [],
+            walletAction: 'deposit',
+            games: {
+                caro: { name: 'CARO 15x15', cols: 15, size: 225, icon: '🏆', color: '#3b82f6', p: 'X', b: 'O' },
+                chess: { name: 'CHESS', cols: 8, size: 64, icon: '⚔️', color: '#818cf8', p: '♟', b: '♙' },
+                xiangqi: { name: 'XIANGQI', cols: 9, size: 90, icon: '🏯', color: '#ef4444', p: '帥', b: '卒' },
+                go: { name: 'GO BOARD', cols: 13, size: 169, icon: '☯️', color: '#10b981', p: '⚫', b: '⚪' }
+            }
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        function setView(v) { 
+            state.view = v; 
+            if (tg?.HapticFeedback && tg.isVersionAtLeast('6.1')) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+            render(); 
+        }
+
+        function setAmount(a) { 
+            const input = document.getElementById('wallet-amount');
+            if (input) input.value = a; 
+            if (tg?.HapticFeedback && tg.isVersionAtLeast('6.1')) {
+                tg.HapticFeedback.selectionChanged();
+            }
+        }
         
         function openWallet(action) {
             state.walletAction = action;
-            document.getElementById('modal-title').innerText = action === 'deposit' ? 'NẠP STARS' : 'RÚT STARS';
-            document.getElementById('modal-btn').innerText = action === 'deposit' ? 'TIẾP TỤC NẠP' : 'YÊU CẦU RÚT';
+            const title = document.getElementById('modal-title');
+            const btn = document.getElementById('modal-btn');
+            if (title) title.innerText = action === 'deposit' ? 'DEPOSIT STARS' : 'WITHDRAW STARS';
+            if (btn) btn.innerText = action === 'deposit' ? 'BUY WITH STARS' : 'REQUEST PAYOUT';
             document.getElementById('wallet-modal').classList.add('active');
         }
 
         function closeModal() { document.getElementById('wallet-modal').classList.remove('active'); }
 
-        function processWallet() {
-            const val = parseInt(document.getElementById('wallet-amount').value);
+        function processTransaction() {
+            const amountInput = document.getElementById('wallet-amount');
+            const val = parseInt(amountInput.value);
             if (!val || val <= 0) return;
 
-            if (state.walletAction === 'withdraw') {
-                if (state.stars < val) { tg.showAlert("Không đủ Stars!"); return; }
-                state.stars -= val;
-                tg.showAlert(`Đã gửi yêu cầu rút ${val} Stars về ví Telegram!`);
+            if (state.walletAction === 'deposit') {
+                // Compatibility check for showConfirm (v6.2+)
+                if (tg?.showConfirm && tg.isVersionAtLeast('6.2')) {
+                    tg.showConfirm(`Confirm purchase of ${val} Stars?`, (ok) => {
+                        if(ok) {
+                            state.stars += val;
+                            notify("Successfully deposited!");
+                            closeModal();
+                            render();
+                        }
+                    });
+                } else {
+                    // Fallback for v6.0 or browsers
+                    const ok = confirm(`Confirm purchase of ${val} Stars?`);
+                    if(ok) {
+                        state.stars += val;
+                        notify("Successfully deposited!");
+                        closeModal();
+                        render();
+                    }
+                }
             } else {
-                state.stars += val;
-                tg.showAlert(`Nạp thành công ${val} Stars!`);
+                if (state.stars < val) { 
+                    notify("Insufficient balance!"); 
+                    return; 
+                }
+                state.stars -= val;
+                notify("Withdrawal request sent!");
+                closeModal();
+                render();
             }
-            closeModal();
-            render();
         }
 
         function render() {
             const root = document.getElementById('app');
             let html = '';
 
-            // Header Nhỏ gọn
+            // Compact Header
             html += `
-                <div class="p-4 flex justify-between items-center bg-black/20">
+                <div class="p-4 flex justify-between items-center bg-black/40 border-b border-white/5">
                     <div class="flex items-center gap-2" onclick="setView('lobby')">
-                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black italic text-xs shadow-lg">W</div>
-                        <span class="font-game text-xs tracking-tighter italic">WINZO</span>
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black italic text-xs shadow-lg shadow-blue-900/40">W</div>
+                        <span class="font-game text-[10px] tracking-tight italic">WINZO P2E</span>
                     </div>
-                    <div class="flex items-center gap-2 glass px-3 py-1.5 rounded-full border-blue-500/20">
+                    <div class="flex items-center gap-2 glass px-3 py-1.5 rounded-xl border-blue-500/20 active:scale-95 transition-transform" onclick="openWallet('deposit')">
                         <span class="text-yellow-500 text-[10px]">⭐</span>
                         <span class="text-xs font-black tabular-nums">${state.stars.toLocaleString()}</span>
+                        <span class="text-[8px] bg-blue-500 px-1 rounded text-white ml-1">+</span>
                     </div>
                 </div>
             `;
 
             if (state.view === 'lobby') {
                 html += `
-                    <div class="px-4 flex-1 overflow-y-auto pt-2">
-                        <!-- Card Wallet Nhỏ gọn -->
-                        <div class="glass p-4 rounded-2xl mb-4 flex gap-2">
-                            <button onclick="openWallet('deposit')" class="flex-1 btn-blue py-3 rounded-xl text-[10px] font-bold">NẠP STARS</button>
-                            <button onclick="openWallet('withdraw')" class="flex-1 bg-white/5 border border-white/10 py-3 rounded-xl text-[10px] font-bold">RÚT TIỀN</button>
+                    <div class="px-4 flex-1 overflow-y-auto pt-4 pb-32 fade-in">
+                        <!-- Quick Wallet -->
+                        <div class="flex gap-2 mb-6">
+                            <button onclick="openWallet('deposit')" class="flex-1 btn-primary py-3 rounded-xl text-[9px] font-black tracking-widest uppercase">Add Stars</button>
+                            <button onclick="openWallet('withdraw')" class="flex-1 bg-white/5 border border-white/10 py-3 rounded-xl text-[9px] font-black tracking-widest uppercase">Cash Out</button>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3 pb-24">
+                        <div class="grid grid-cols-2 gap-3">
                             ${Object.keys(state.games).map(key => `
-                                <div onclick="goGame('${key}')" class="glass p-4 rounded-3xl flex flex-col items-center gap-2 border-white/5 active:scale-95 transition-all">
-                                    <div class="text-3xl">${state.games[key].icon}</div>
-                                    <span class="font-black text-[9px] uppercase tracking-wider">${state.games[key].name}</span>
-                                    <div class="w-full h-px bg-white/5 my-1"></div>
-                                    <span class="text-[8px] text-blue-400 font-bold uppercase">CHƠI NGAY</span>
+                                <div onclick="goGame('${key}')" class="glass p-5 rounded-3xl flex flex-col items-center gap-2 border-white/5 active:scale-95 transition-all">
+                                    <div class="text-4xl drop-shadow-lg">${state.games[key].icon}</div>
+                                    <span class="font-black text-[9px] uppercase tracking-tighter opacity-80">${state.games[key].name}</span>
+                                    <div class="w-8 h-1 bg-blue-500/30 rounded-full mt-1"></div>
                                 </div>
                             `).join('')}
                         </div>
@@ -186,61 +264,59 @@
             } else if (state.view === 'game') {
                 const g = state.games[state.currentGame];
                 html += `
-                    <div class="flex-1 flex flex-col">
-                        <div class="p-4 flex justify-between items-center">
-                            <button onclick="setView('lobby')" class="text-[10px] font-bold text-white/40">← QUAY LẠI</button>
-                            <span class="font-game text-[10px]" style="color:${g.color}">${g.name}</span>
-                            <button onclick="goGame('${state.currentGame}')" class="text-[10px] font-bold text-blue-400">LÀM MỚI</button>
+                    <div class="flex-1 flex flex-col fade-in">
+                        <div class="p-4 flex justify-between items-center bg-black/20">
+                            <button onclick="setView('lobby')" class="text-[9px] font-black text-white/30 uppercase tracking-widest">Back</button>
+                            <span class="font-game text-[9px] tracking-[0.2em]" style="color:${g.color}">${g.name}</span>
+                            <button onclick="goGame('${state.currentGame}')" class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Reset</button>
                         </div>
 
-                        <div class="board-container">
+                        <div class="board-container py-2">
                             <div class="board-grid" style="grid-template-columns: repeat(${g.cols}, 1fr);">
                                 ${state.board.map((cell, idx) => `
                                     <div class="cell" onclick="handleMove(${idx})">
-                                        <span style="color: ${cell === g.piece ? g.color : '#fff'}">${cell || ''}</span>
+                                        <span style="color: ${cell === g.p ? g.color : (cell? '#fff' : 'transparent')}">${cell || '.'}</span>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
 
-                        <div class="mt-4 px-6 text-center">
-                             <div class="glass p-4 rounded-2xl border-blue-500/10 flex justify-between items-center">
-                                <div class="text-left">
-                                    <p class="text-[8px] text-white/30 uppercase font-black">Người chơi</p>
-                                    <p class="text-xs font-bold text-blue-400">Bạn (${g.piece})</p>
+                        <div class="mt-auto px-4 pb-32">
+                             <div class="glass p-3 rounded-2xl flex justify-between items-center border-white/5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded bg-blue-500/20 flex items-center justify-center text-[10px] font-black text-blue-400">YOU</div>
+                                    <span class="text-[10px] font-bold opacity-60">Playing as ${g.p}</span>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-[8px] text-white/30 uppercase font-black">Đối thủ</p>
-                                    <p class="text-xs font-bold text-white/60">Bot (${g.bot})</p>
-                                </div>
+                                <div class="text-[9px] font-bold text-yellow-500 animate-pulse uppercase tracking-tighter">Matching Player...</div>
                              </div>
                         </div>
                     </div>
                 `;
             } else if (state.view === 'friends') {
                 html += `
-                    <div class="px-6 py-4 flex-1">
-                        <div class="glass p-8 rounded-3xl text-center">
-                            <div class="text-4xl mb-4">🎁</div>
-                            <h3 class="font-game text-sm mb-2">MỜI BẠN BÈ</h3>
-                            <p class="text-[10px] text-white/40 mb-6 uppercase tracking-widest leading-loose">Nhận 2% hoa hồng trọn đời<br>khi bạn bè chơi game</p>
-                            <button onclick="tg.showAlert('Link đã copy!')" class="w-full btn-blue py-4 rounded-xl text-[10px] font-black uppercase">SAO CHÉP LINK MỜI</button>
+                    <div class="px-6 py-6 flex-1 fade-in">
+                        <div class="glass p-8 rounded-[2.5rem] text-center border-blue-500/10 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-3xl"></div>
+                            <div class="text-5xl mb-4">🤝</div>
+                            <h3 class="font-game text-xs mb-3 tracking-widest uppercase">Affiliate Program</h3>
+                            <p class="text-[10px] text-white/40 mb-8 uppercase tracking-widest leading-relaxed">Earn 2% commission<br>on every game played by your friends</p>
+                            <button onclick="notify('Link copied to clipboard!')" class="w-full btn-primary py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">Copy Invite Link</button>
                         </div>
                     </div>
                 `;
             }
 
-            // Navbar Bottom - Tối giản
+            // Bottom Navigation
             html += `
-                <div class="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-black to-transparent">
-                    <nav class="glass h-16 rounded-2xl flex items-center justify-around px-4 border-white/5">
-                        <button onclick="setView('lobby')" class="flex flex-col items-center gap-1 ${state.view==='lobby'?'text-blue-500':'text-white/20'}">
-                            <svg width="20" height="20" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                            <span class="text-[8px] font-black">SẢNH</span>
+                <div class="fixed bottom-0 left-0 right-0 p-6 pt-10 bg-gradient-to-t from-[#050608] via-[#050608]/90 to-transparent">
+                    <nav class="glass h-16 rounded-2xl flex items-center justify-around px-2 border-white/5">
+                        <button onclick="setView('lobby')" class="nav-item flex-1 flex flex-col items-center gap-1 ${state.view==='lobby'?'active text-blue-500':'text-white/20'}">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            <span class="text-[7px] font-black uppercase">Home</span>
                         </button>
-                        <button onclick="setView('friends')" class="flex flex-col items-center gap-1 ${state.view==='friends'?'text-blue-500':'text-white/20'}">
-                            <svg width="20" height="20" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5s-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                            <span class="text-[8px] font-black">BẠN BÈ</span>
+                        <button onclick="setView('friends')" class="nav-item flex-1 flex flex-col items-center gap-1 ${state.view==='friends'?'active text-blue-500':'text-white/20'}">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            <span class="text-[7px] font-black uppercase">Invite</span>
                         </button>
                     </nav>
                 </div>
@@ -258,17 +334,20 @@
         window.handleMove = (idx) => {
             if (state.board[idx]) return;
             const g = state.games[state.currentGame];
-            state.board[idx] = g.piece;
-            tg?.HapticFeedback?.impactOccurred('light');
+            state.board[idx] = g.p;
+            if (tg?.HapticFeedback && tg.isVersionAtLeast('6.1')) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
             render();
 
+            // Bot Simulation
             setTimeout(() => {
                 const empty = state.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
                 if (empty.length > 0) {
-                    state.board[empty[Math.floor(Math.random()*empty.length)]] = g.bot;
+                    state.board[empty[Math.floor(Math.random()*empty.length)]] = g.b;
                     render();
                 }
-            }, 500);
+            }, 400);
         };
 
         render();
