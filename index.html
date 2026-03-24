@@ -3,134 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>WINZO P2E</title>
+    <title>WINZO P2E - PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;600;700;900&display=swap');
         
+        :root {
+            --tg-theme-bg-color: #050608;
+            --primary-blue: #3b82f6;
+        }
+
         body { 
-            background: #050608; 
+            background: var(--tg-theme-bg-color); 
             color: #e2e8f0; 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
             overflow: hidden; 
             -webkit-font-smoothing: antialiased;
+            user-select: none;
         }
 
         .font-game { font-family: 'Orbitron', sans-serif; }
 
-        /* Cấu trúc Nền mờ ảo Mesh Gradient */
         .bg-glow {
             position: fixed; inset: 0; z-index: -1;
             background-image: 
-                radial-gradient(at 50% -20%, rgba(30, 58, 138, 0.25) 0px, transparent 50%),
+                radial-gradient(at 50% -20%, rgba(30, 58, 138, 0.3) 0px, transparent 50%),
                 radial-gradient(at 0% 100%, rgba(17, 24, 39, 0.2) 0px, transparent 40%),
-                radial-gradient(at 100% 100%, rgba(13, 24, 42, 0.15) 0px, transparent 40%);
+                radial-gradient(at 100% 100%, rgba(13, 24, 42, 0.2) 0px, transparent 40%);
         }
 
-        /* Glassmorphism Card Premium */
         .glass { 
             background: rgba(255, 255, 255, 0.03); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        /* Viền Neon Glow */
         .neon-blue { 
             border: 1px solid rgba(59, 130, 246, 0.3); 
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15); 
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); 
         }
         
-        /* Nút bấm Premium Gradient */
         .btn-blue { 
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); 
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
-        .btn-blue:active { transform: scale(0.96); filter: brightness(1.1); }
+        .btn-blue:active { transform: scale(0.95); filter: brightness(1.2); }
 
-        /* Tab Active Effect */
-        .tab-active { color: #3b82f6; transform: scale(1.15); }
+        .tab-active { color: var(--primary-blue); transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5)); }
         
-        /* Board Styles (Giữ nguyên logic cũ) */
-        .board-grid { display: grid; gap: 1px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; margin: 0 auto; max-width: 95vw;}
-        .cell { background: #07090e; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 8px; }
+        /* Board Logic Styles */
+        .board-grid { 
+            display: grid; gap: 1px; background: rgba(255,255,255,0.1); 
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; 
+            overflow: hidden; margin: 0 auto;
+        }
+        .cell { 
+            background: #0a0c14; aspect-ratio: 1; display: flex; 
+            align-items: center; justify-content: center; font-size: 10px;
+            transition: background 0.2s;
+        }
         .cell:active { background: #1e293b; }
+        .cell.marked-x { color: #3b82f6; font-weight: bold; font-size: 14px; }
+        .cell.marked-o { color: #ef4444; font-weight: bold; font-size: 14px; }
         
-        /* Animation trượt nhẹ */
-        .fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Ẩn scrollbar */
-        ::-webkit-scrollbar { width: 0px; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar for friends list if needed */
+        .scroll-hide::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
-    <div id="app" class="h-screen flex flex-col relative overflow-hidden pb-32"></div>
+    <div id="app" class="h-screen flex flex-col relative overflow-hidden pb-28"></div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 glass rounded-full text-[10px] font-bold text-blue-400 opacity-0 transition-opacity pointer-events-none border border-blue-500/20"></div>
 
     <script>
         const tg = window.Telegram?.WebApp;
-        if (tg) { tg.ready(); tg.expand(); tg.headerColor = '#050608'; }
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            tg.headerColor = '#050608';
+            tg.enableClosingConfirmation();
+        }
 
         const i18n = {
-            vi: { lobby: "Sảnh Game", friends: "Bạn bè", stars: "SỐ DƯ STARS", invite: "MỜI BẠN BÈ", copy: "SAO CHÉP LINK", start: "CHƠI NGAY", back: "QUAY LẠI", comm: "NHẬN 2% HOA HỒNG", wait: "ĐANG GHÉP ĐỐI THỦ..." },
-            en: { lobby: "Lobby", friends: "Affiliate", stars: "STARS BALANCE", invite: "INVITE FRIENDS", copy: "COPY LINK", start: "PLAY NOW", back: "BACK", comm: "GET 2% BONUS", wait: "MATCHING..." }
+            vi: { lobby: "Sảnh", friends: "Bạn bè", stars: "SỐ DƯ STARS", invite: "MỜI BẠN BÈ", copy: "SAO CHÉP LINK", start: "CHƠI NGAY", back: "QUAY LẠI", comm: "NHẬN 2% HOA HỒNG", wait: "ĐANG GHÉP ĐỐI THỦ...", copied: "Đã sao chép link mời!" },
+            en: { lobby: "Lobby", friends: "Affiliate", stars: "STARS BALANCE", invite: "INVITE FRIENDS", copy: "COPY LINK", start: "PLAY NOW", back: "BACK", comm: "GET 2% BONUS", wait: "MATCHING...", copied: "Referral link copied!" }
         };
 
+        // State Management
         let state = {
-            lang: 'vi',
+            lang: tg?.initDataUnsafe?.user?.language_code === 'vi' ? 'vi' : 'en',
             view: 'lobby',
             stars: 2500,
+            user: {
+                name: tg?.initDataUnsafe?.user?.first_name || "Player",
+                photo: tg?.initDataUnsafe?.user?.photo_url || null
+            },
             currentGame: null,
+            board: [], // Save board state
             games: {
-                caro: { name: 'Caro', cols: 15, size: 225, color: '#3b82f6', icon: '🏆' },
-                chess: { name: 'Chess', cols: 8, size: 64, color: '#818cf8', icon: '⚔️' },
-                xiangqi: { name: 'Xiangqi', cols: 9, size: 90, color: '#ef4444', icon: '🏯' },
-                go: { name: 'Go', cols: 13, size: 169, color: '#10b981', icon: '☯️' }
+                caro: { name: 'Caro', cols: 15, size: 225, icon: '🏆', color: '#3b82f6' },
+                chess: { name: 'Chess', cols: 8, size: 64, icon: '⚔️', color: '#818cf8' },
+                xiangqi: { name: 'Xiangqi', cols: 9, size: 90, icon: '🏯', color: '#ef4444' },
+                go: { name: 'Go', cols: 13, size: 169, icon: '☯️', color: '#10b981' }
             }
         };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2000);
+        }
 
         function render() {
             const root = document.getElementById('app');
             const t = i18n[state.lang];
             let html = '';
 
-            // Header Tối ưu UI
+            // --- HEADER ---
             html += `
                 <div class="p-6 flex justify-between items-center z-10">
                     <div class="flex items-center gap-3 active:scale-95 transition-transform" onclick="setView('lobby')">
-                        <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white italic shadow-lg shadow-blue-500/30">W</div>
-                        <span class="font-game text-lg tracking-tighter italic">WINZO</span>
+                        ${state.user.photo 
+                            ? `<img src="${state.user.photo}" class="w-9 h-9 rounded-xl border border-white/10 shadow-lg">`
+                            : `<div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white italic shadow-lg shadow-blue-500/30">W</div>`
+                        }
+                        <div>
+                            <span class="font-game text-sm tracking-tighter italic block">WINZO</span>
+                            <span class="text-[8px] text-white/40 uppercase font-bold tracking-widest">${state.user.name}</span>
+                        </div>
                     </div>
-                    <div class="flex gap-1 glass p-1.5 rounded-xl border border-white/5">
-                        <div onclick="setLang('vi')" class="px-3 py-1 text-[10px] font-bold cursor-pointer transition-colors ${state.lang==='vi'?'bg-blue-600 rounded-lg text-white':'text-white/40'}">VN</div>
-                        <div onclick="setLang('en')" class="px-3 py-1 text-[10px] font-bold cursor-pointer transition-colors ${state.lang==='en'?'bg-blue-600 rounded-lg text-white':'text-white/40'}">EN</div>
+                    <div class="flex gap-1 glass p-1 rounded-lg border border-white/5">
+                        <div onclick="setLang('vi')" class="px-2 py-0.5 text-[8px] font-bold cursor-pointer transition-all ${state.lang==='vi'?'bg-blue-600 rounded-md text-white shadow-sm':'text-white/30'}">VN</div>
+                        <div onclick="setLang('en')" class="px-2 py-0.5 text-[8px] font-bold cursor-pointer transition-all ${state.lang==='en'?'bg-blue-600 rounded-md text-white shadow-sm':'text-white/30'}">EN</div>
                     </div>
                 </div>
             `;
 
             if (state.view === 'lobby') {
                 html += `
-                    <div class="px-6 flex-1 overflow-y-auto fade-in-up">
-                        <div class="glass neon-blue p-6 rounded-[2.5rem] mb-6 flex justify-between items-center card-shadow">
-                            <div>
+                    <div class="px-6 flex-1 overflow-y-auto fade-in scroll-hide">
+                        <div class="glass neon-blue p-6 rounded-[2.5rem] mb-6 flex justify-between items-center relative overflow-hidden">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full"></div>
+                            <div class="relative z-10">
                                 <p class="text-[10px] uppercase font-bold text-blue-400 mb-1 tracking-widest">${t.stars}</p>
-                                <p class="text-3xl font-black font-game">${state.stars.toLocaleString()} <span class="text-xs text-yellow-500 italic">⭐</span></p>
+                                <p class="text-3xl font-black font-game">${state.stars.toLocaleString()} <span class="text-xs text-yellow-500 italic ml-1">⭐</span></p>
                             </div>
-                            <div class="w-14 h-14 rounded-full border-4 border-blue-500/20 flex items-center justify-center bg-blue-500/10 shadow-inner">
-                                <svg width="24" height="24" fill="currentColor" class="text-blue-500"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                            </div>
+                            <button class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 active:scale-90 transition-transform">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" class="text-blue-400"><path d="M12 5v14M5 12h14"/></svg>
+                            </button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 pt-2 pb-6">
-                            ${Object.keys(state.games).map((key, i) => `
-                                <div onclick="goGame('${key}')" style="animation-delay: ${i*0.05}s" class="glass p-5 rounded-[2.5rem] flex flex-col items-center gap-4 active:scale-95 transition-all group border-white/5 hover:border-blue-500/20">
+                        
+                        <div class="grid grid-cols-2 gap-4 pb-10">
+                            ${Object.keys(state.games).map((key) => `
+                                <div onclick="goGame('${key}')" class="glass p-5 rounded-[2.5rem] flex flex-col items-center gap-4 active:scale-95 transition-all group border-white/5 hover:border-blue-500/20">
                                     <div class="text-4xl mb-1 transform group-hover:scale-110 transition-transform">${state.games[key].icon}</div>
-                                    <span class="font-black text-xs uppercase tracking-tight text-white/90">${state.games[key].name}</span>
-                                    <button class="w-full btn-blue py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider">${t.start}</button>
+                                    <span class="font-black text-[10px] uppercase tracking-wider text-white/90">${state.games[key].name}</span>
+                                    <button class="w-full btn-blue py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-none">${t.start}</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -139,15 +177,16 @@
             } 
             else if (state.view === 'friends') {
                 html += `
-                    <div class="px-6 flex-1 fade-in-up">
-                        <div class="glass neon-blue p-8 rounded-[2.5rem] mb-6 text-center">
-                            <h3 class="font-game text-xl mb-1">${t.invite}</h3>
-                            <p class="text-[10px] text-blue-400 font-bold uppercase mb-5 tracking-widest">${t.comm}</p>
-                            <button onclick="copyRef()" class="w-full btn-blue py-4 rounded-2xl font-black text-xs uppercase tracking-widest">${t.copy}</button>
+                    <div class="px-6 flex-1 fade-in">
+                        <div class="glass neon-blue p-8 rounded-[2.5rem] mb-6 text-center relative overflow-hidden">
+                             <div class="absolute -left-10 top-0 w-32 h-32 bg-blue-500/5 blur-3xl"></div>
+                            <h3 class="font-game text-xl mb-1 relative z-10">${t.invite}</h3>
+                            <p class="text-[10px] text-blue-400 font-bold uppercase mb-6 tracking-widest">${t.comm}</p>
+                            <button onclick="copyRef()" class="w-full btn-blue py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-blue-600/20">${t.copy}</button>
                         </div>
-                        <div class="space-y-3 opacity-30 text-center py-16">
-                            <div class="text-6xl mb-4">👥</div>
-                            <p class="text-xs italic tracking-widest uppercase font-medium">Chưa có bạn bè nào</p>
+                        <div class="space-y-3 opacity-20 text-center py-10">
+                            <div class="text-5xl mb-4 grayscale">👥</div>
+                            <p class="text-[10px] italic tracking-[0.2em] uppercase font-bold">No friends yet</p>
                         </div>
                     </div>
                 `;
@@ -155,38 +194,52 @@
             else if (state.view === 'game') {
                 const g = state.games[state.currentGame];
                 html += `
-                    <div class="px-4 flex-1 fade-in-up">
+                    <div class="px-4 flex-1 fade-in flex flex-col">
                         <div class="flex justify-between items-center mb-6">
-                            <button onclick="setView('lobby')" class="w-10 h-10 glass rounded-full flex items-center justify-center text-xs font-black border-white/5active:scale-90">←</button>
+                            <button onclick="setView('lobby')" class="w-10 h-10 glass rounded-2xl flex items-center justify-center text-xs active:scale-90 transition-transform">←</button>
                             <div class="text-center">
-                                <h2 style="color: ${g.color}" class="font-game text-sm uppercase tracking-wider">${g.name}</h2>
-                                <p class="text-[8px] text-white/30 font-bold uppercase tracking-[0.3em]">MULTIPLAYER</p>
+                                <h2 style="color: ${g.color}" class="font-game text-sm uppercase tracking-widest">${g.name}</h2>
+                                <p class="text-[7px] text-white/20 font-bold uppercase tracking-[0.4em] mt-1">Room #0921</p>
                             </div>
-                            <div class="w-10 h-10 glass rounded-full flex items-center justify-center active:scale-90" onclick="goGame('${state.currentGame}')">↻</div>
+                            <button onclick="resetGame()" class="w-10 h-10 glass rounded-2xl flex items-center justify-center active:scale-90 transition-transform italic text-[10px] font-bold">RE</button>
                         </div>
-                        <div class="board-grid shadow-2xl shadow-black" style="grid-template-columns: repeat(${g.cols}, 1fr);">
-                            ${Array(g.size).fill(0).map(() => `<div class="cell" onclick="tap()"></div>`).join('')}
+
+                        <div class="board-grid shadow-2xl shadow-black/50" style="grid-template-columns: repeat(${g.cols}, 1fr); width: 100%; max-width: 400px;">
+                            ${state.board.map((cell, idx) => `
+                                <div class="cell ${cell==='X'?'marked-x':(cell==='O'?'marked-o':'')}" onclick="handleMove(${idx})">
+                                    ${cell || ''}
+                                </div>
+                            `).join('')}
                         </div>
-                        <div class="mt-8 glass p-6 rounded-[2.5rem] text-center border-blue-500/20 card-shadow">
-                            <p class="animate-pulse text-xs font-bold text-blue-400 italic tracking-wide">${t.wait}</p>
+
+                        <div class="mt-auto mb-4 glass p-4 rounded-[2rem] flex items-center justify-between border-blue-500/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs">P1</div>
+                                <span class="text-[10px] font-bold text-white/60">CHỜ ĐỐI THỦ...</span>
+                            </div>
+                            <div class="flex gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse delay-75"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse delay-150"></span>
+                            </div>
                         </div>
                     </div>
                 `;
             }
 
-            // Navbar Bottom Tối ưu UI
+            // --- BOTTOM NAV ---
             html += `
-                <div class="fixed bottom-8 left-8 right-8 z-50">
-                    <nav class="glass h-20 rounded-[2.5rem] flex items-center justify-around px-8 neon-blue shadow-3xl shadow-blue-900/30">
-                        <button onclick="setView('lobby')" class="p-3 transition-all duration-300 ${state.view==='lobby'?'tab-active':'text-white/20 hover:text-white/50'}">
+                <div class="fixed bottom-6 left-6 right-6 z-50">
+                    <nav class="glass h-20 rounded-[2.5rem] flex items-center justify-around px-8 neon-blue shadow-2xl shadow-blue-900/20">
+                        <button onclick="setView('lobby')" class="p-3 transition-all duration-300 ${state.view==='lobby'?'tab-active':'text-white/20 hover:text-white/40'}">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
                         </button>
                         
-                        <div onclick="setView('lobby')" class="w-14 h-14 btn-blue rounded-3xl flex items-center justify-center shadow-lg shadow-blue-600/50 rotate-45 transform active:scale-90 active:rotate-90 transition-all duration-500 cursor-pointer">
-                            <div class="-rotate-45 font-game font-black text-white text-sm">W</div>
+                        <div onclick="setView('lobby')" class="w-14 h-14 btn-blue rounded-3xl flex items-center justify-center shadow-lg shadow-blue-600/40 rotate-45 transform active:scale-90 active:rotate-90 transition-all duration-500 cursor-pointer">
+                            <div class="-rotate-45 font-game font-black text-white text-base">W</div>
                         </div>
                         
-                        <button onclick="setView('friends')" class="p-3 transition-all duration-300 ${state.view==='friends'?'tab-active':'text-white/20 hover:text-white/50'}">
+                        <button onclick="setView('friends')" class="p-3 transition-all duration-300 ${state.view==='friends'?'tab-active':'text-white/20 hover:text-white/40'}">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>
                         </button>
                     </nav>
@@ -196,15 +249,74 @@
             root.innerHTML = html;
         }
 
+        // Functions
         window.setLang = (l) => { state.lang = l; render(); };
-        window.setView = (v) => { state.view = v; tg?.HapticFeedback?.impactOccurred('medium'); render(); };
-        window.goGame = (key) => { state.currentGame = key; setView('game'); };
-        window.tap = () => tg?.HapticFeedback?.impactOccurred('light');
+        window.setView = (v) => { 
+            state.view = v; 
+            tg?.HapticFeedback?.impactOccurred('medium'); 
+            render(); 
+        };
+        
+        window.goGame = (key) => { 
+            state.currentGame = key; 
+            const g = state.games[key];
+            state.board = Array(g.size).fill(null);
+            setView('game'); 
+        };
+
+        window.handleMove = (idx) => {
+            if (state.board[idx]) return;
+            tg?.HapticFeedback?.impactOccurred('light');
+            
+            // Logic cờ vây/Caro cơ bản: Đánh X (người chơi)
+            state.board[idx] = state.currentGame === 'caro' ? 'X' : (state.currentGame === 'chess' ? '♟' : '⚫');
+            render();
+
+            // Giả lập bot đánh sau 500ms
+            setTimeout(() => {
+                const emptyCells = state.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+                if (emptyCells.length > 0) {
+                    const randomIdx = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    state.board[randomIdx] = state.currentGame === 'caro' ? 'O' : (state.currentGame === 'chess' ? '♙' : '⚪');
+                    tg?.HapticFeedback?.impactOccurred('soft');
+                    render();
+                }
+            }, 600);
+        };
+
+        window.resetGame = () => {
+            const g = state.games[state.currentGame];
+            state.board = Array(g.size).fill(null);
+            tg?.HapticFeedback?.notificationOccurred('warning');
+            render();
+        };
+
         window.copyRef = () => {
-            tg?.showPopup({ message: state.lang === 'vi' ? "Đã sao chép link mời nhận 2% hoa hồng!" : "Copy success! Get 2% commission now." });
+            const refLink = `https://t.me/your_bot?start=${tg?.initDataUnsafe?.user?.id || 'ref'}`;
+            
+            // Dùng Telegram API để copy/share
+            if (tg) {
+                // Cách 1: Hiện popup thông báo của Telegram
+                tg.showPopup({
+                    title: 'Referral Link',
+                    message: refLink,
+                    buttons: [{id: 'copy', type: 'default', text: i18n[state.lang].copy}]
+                });
+                // Cách 2: Copy trực tiếp (Nếu môi trường hỗ trợ)
+                try {
+                    const el = document.createElement('textarea');
+                    el.value = refLink;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    showToast(i18n[state.lang].copied);
+                } catch (e) {}
+            }
             tg?.HapticFeedback?.notificationOccurred('success');
         };
 
+        // Khởi tạo
         render();
     </script>
 </body>
