@@ -17,7 +17,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
-    /* Chống chọn văn bản để giống App thật hơn */
     body {
       -webkit-touch-callout: none;
       -webkit-user-select: none;
@@ -37,14 +36,12 @@
   <script type="text/babel" src="App.js"></script>
 
   <script type="text/babel">
-    // Đợi file App.js nạp xong rồi mới render
     const renderApp = () => {
       if (window.App) {
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<window.App />);
       } else {
-        // Thử lại sau 100ms nếu App chưa sẵn sàng
-        setTimeout(renderApp, 100);
+        setTimeout(renderApp, 50);
       }
     };
     renderApp();
